@@ -1,0 +1,39 @@
+name: signals
+
+on:
+  schedule:
+    # 12:00 UTC on weekdays = 8am ET / 5am PT, well before the 9:30 ET open.
+    # GitHub cron is always UTC and does not follow daylight saving.
+    - cron: "0 12 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install deps
+        run: pip install yfinance
+
+      - name: compute signals
+        run: python engine/signals.py
+
+      - name: commit if changed
+        run: |
+          git config user.name  "signals-bot"
+          git config user.email "actions@github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "no change"
+          else
+            git commit -m "signals $(date -u +%Y-%m-%d)"
+            git push
+          fi

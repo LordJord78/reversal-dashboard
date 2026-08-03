@@ -1,0 +1,21 @@
+[
+  {
+    "session": "2026-07-31",
+    "z": {
+      "QQQ": -0.564,
+      "XLK": -0.809,
+      "DIA": 0.083,
+      "SPY": 0.534,
+      "TLT": -0.596,
+      "GLD": 0.216
+    },
+    "action": {
+      "QQQ": "none",
+      "XLK": "none",
+      "DIA": "none",
+      "SPY": "none",
+      "TLT": "none",
+      "GLD": "none"
+    }
+  }
+]
