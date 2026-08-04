@@ -178,8 +178,14 @@ function importTrades(e){
     try{
       const raw = JSON.parse(r.result);
       if(!Array.isArray(raw)) throw 0;
+      /* id is regenerated, never carried over from the file. It is the one
+         imported field that reaches an inline onclick handler rather than
+         going through esc(), so a crafted export could otherwise smuggle
+         script into the page that reads it back. Ids are internal and
+         meaningless outside this browser, so nothing is lost by minting
+         fresh ones. */
       saveTrades(sortTrades(raw.map(x => ({
-        id: x.id || uid(), ticker: x.ticker,
+        id: uid(), ticker: x.ticker,
         side: (x.side||'').toString().toLowerCase().startsWith('s') ? 'short' : 'buy',
         size: x.size ?? null, entry: x.entry,
         entryDate: x.entryDate || x.date || null,

@@ -72,9 +72,16 @@
 
   <h2>Net Sharpe by slippage assumption &mdash; QQQ, 27 years</h2>
   <div class="scroll"><table class="tall" id="costs"></table></div>
-  <p class="note" style="margin:10px 0 0">The engine ships assuming 0.2bp. The audit
-  flagged that as optimistic for market-on-open and market-on-close fills; this table
-  is where that assumption stops being academic and starts choosing the strategy.</p>
+  <p class="note" style="margin:10px 0 0">The engine now ships assuming
+  <strong>0.4bp</strong> &mdash; 0.2bp charged on each of the two prints a trade makes,
+  the market-on-open and the market-on-close, where it used to be charged once for
+  both. So the shipped assumption sits between the first two rows, not on the first
+  one. v2 still wins there, by roughly half the margin the 0.2bp row shows.</p>
+  <p class="note" style="margin:10px 0 0">The rows themselves are unchanged &mdash;
+  each is a measurement at that assumption and none of them moved. What moved is which
+  row describes what the engine actually charges. These figures come from the research
+  work and are not recomputed by anything in this repo, which is why the label was
+  corrected rather than the numbers.</p>
 
   <h2>Walk-forward</h2>
   <div class="scroll"><table class="tall" id="wf"></table></div>
@@ -101,7 +108,7 @@
 <script src="assets/common.js"></script>
 <script>
 const COSTS = [
-  {slip:'0.2bp  (shipped)', v1:0.758, v2:0.774},
+  {slip:'0.2bp',            v1:0.758, v2:0.774},
   {slip:'1bp',              v1:0.744, v2:0.722},
   {slip:'2bp',              v1:0.725, v2:0.657},
   {slip:'3bp',              v1:0.707, v2:0.593},

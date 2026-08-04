@@ -181,8 +181,8 @@ function renderMine(){
       <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
       <td>${isOpen(t) ? '<span class="pill go">open</span>' : '<span class="meta">closed</span>'}</td>
       <td class="num">${isOpen(t)
-        ? `<button class="mini" onclick="closeTrade('${t.id}', ${m||0})">close</button>` : ''}
-        <button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+        ? `<button class="mini" onclick="closeTrade('${esc(t.id)}', ${m||0})">close</button>` : ''}
+        <button class="mini" onclick="delTrade('${esc(t.id)}')">×</button></td></tr>`;
   };
   const rets = done.map(t => tradeRet(t)).filter(v => v !== null);
   const avg  = rets.length ? rets.reduce((a,b)=>a+b,0)/rets.length : null;

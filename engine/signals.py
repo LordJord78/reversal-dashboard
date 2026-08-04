@@ -229,7 +229,7 @@ def main():
         print("no data from any source", file=sys.stderr)
         sys.exit(1)
 
-    instruments, last_session = [], None
+    instruments, sessions = [], []
     for tk, tier, stats in UNIVERSE:
         if tk not in raw:
             instruments.append({"ticker": tk, "tier": tier, "stats": stats,
@@ -240,13 +240,26 @@ def main():
             instruments.append({"ticker": tk, "tier": tier, "stats": stats,
                                 "error": "insufficient history"})
             continue
-        last_session = last_session or sig["prev_session"]
+        sessions.append(sig["prev_session"])
         instruments.append({"ticker": tk, "tier": tier, "stats": stats, **sig})
+
+    # The newest session any instrument scored, not whichever one happened to
+    # come first in UNIVERSE. Those differ when a feed lags, and the page
+    # prints this date next to every z -- including the ones it isn't the
+    # date of. A disagreement is also worth surfacing rather than averaging
+    # away: it means one instrument is being scored off older bars than the
+    # rest, which is the same class of fault as scoring an unsettled bar.
+    last_session = max(sessions) if sessions else None
+    lagging = sorted({s for s in sessions if s != last_session})
+    if lagging:
+        print(f"WARNING: feeds disagree on the last session. newest "
+              f"{last_session}, also seen {', '.join(lagging)}", file=sys.stderr)
 
     generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     payload = {
         "generated_at": generated_at,
         "last_session": last_session,
+        "stale_sessions": lagging,
         "threshold": THRESHOLD,
         "cap": CAP,
         "instruments": instruments,

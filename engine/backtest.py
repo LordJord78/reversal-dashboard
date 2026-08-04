@@ -35,13 +35,20 @@ TRADING_DAYS = 252
 # allowance for the market-on-open and market-on-close fills this rule
 # actually transacts at -- it is an assumption, not a measurement. Raise it
 # and watch how fast the edge moves if you want to know how fragile it is.
+#
+# It is charged PER PRINT, not per round trip. The rule transacts twice a
+# trade -- a market-on-open and a market-on-close -- and those are the two
+# fill types you have least control over. Charging the allowance once was
+# understating the cost of the leg that is arguably worse, since the closing
+# auction is where a 2x levered order is most likely to move against itself.
 SLIPPAGE_BP = 0.2
+PRINTS_PER_TRADE = 2
 
 
 def cost_bp(spread_bp, position):
     if spread_bp is None:
         spread_bp = 1.0
-    return abs(position) * (spread_bp + SLIPPAGE_BP)
+    return abs(position) * (spread_bp + PRINTS_PER_TRADE * SLIPPAGE_BP)
 
 
 # ---------------------------------------------------------------- replay
@@ -254,7 +261,9 @@ def main():
             "ticker": tk, "tier": tier, "generated_at": generated_at,
             "params": {"vol_window": S.VOL_WINDOW, "threshold": S.THRESHOLD,
                        "cap": S.CAP, "spread_bp": note.get("spread_bp"),
-                       "slippage_bp": SLIPPAGE_BP},
+                       "slippage_bp": SLIPPAGE_BP,
+                       "prints_per_trade": PRINTS_PER_TRADE,
+                       "cost_bp_at_1x": round(cost_bp(note.get("spread_bp"), 1.0), 3)},
             "coverage": {"first_session": rows[0][0], "last_session": rows[-1][0],
                          "sessions": n_sessions, "years": round(years, 1)},
             "note_stats": note,

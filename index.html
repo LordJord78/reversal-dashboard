@@ -338,8 +338,8 @@ function renderActive(){
       <td class="num ${r===null?'':cls(r)}"><strong>${r===null?'—':pct(r)}</strong></td>
       <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
       <td class="num">
-        <button class="mini" onclick="closeTrade('${t.id}', ${m||0})">close</button>
-        <button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+        <button class="mini" onclick="closeTrade('${esc(t.id)}', ${m||0})">close</button>
+        <button class="mini" onclick="delTrade('${esc(t.id)}')">×</button></td></tr>`;
   }).join('');
 
   $('active').innerHTML = `<div class="card scroll"><table><thead><tr>
@@ -374,7 +374,7 @@ function renderLog(){
       <td class="num">$${Number(t.exit).toFixed(2)}</td>
       <td class="num ${r===null?'':cls(r)}"><strong>${r===null?'—':pct(r)}</strong></td>
       <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
-      <td class="num"><button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+      <td class="num"><button class="mini" onclick="delTrade('${esc(t.id)}')">×</button></td></tr>`;
   }).join('');
 
   $('log').innerHTML = `<div class="scroll"><table><thead><tr>

@@ -53,7 +53,7 @@ v2 pays the spread 251 times a year for an edge 33x smaller per trade. v1 pays i
 
 | slippage | v1 QQQ | v2 QQQ | v1 portfolio | v2 portfolio |
 |---|---|---|---|---|
-| 0.2bp *(shipped assumption)* | 0.758 | **0.774** | 0.782 | **0.828** |
+| 0.2bp | 0.758 | **0.774** | 0.782 | **0.828** |
 | 1bp | **0.744** | 0.722 | **0.759** | 0.744 |
 | 2bp | **0.725** | 0.657 | **0.730** | 0.638 |
 | 5bp | **0.670** | 0.463 | **0.644** | 0.320 |
@@ -64,6 +64,20 @@ v2 pays the spread 251 times a year for an edge 33x smaller per trade. v1 pays i
 widens fast. The audit flagged `SLIPPAGE_BP = 0.2` as optimistic for
 market-on-open and market-on-close fills; this is where that assumption stops
 being academic and starts choosing the strategy for you.
+
+That flag has since been acted on. `backtest.py` charges `SLIPPAGE_BP` per
+print rather than per round trip, so the shipped assumption is now **0.4bp** a
+trade, not 0.2bp — it sits between the first two rows above. v2 still wins
+there, by roughly half the margin the 0.2bp row shows. Interpolating linearly
+between the 0.2bp and 1bp rows puts the crossover near 0.55bp, but that is an
+interpolation between two measured points, not a measurement — if the exact
+crossover matters, measure it.
+
+The rows are unchanged: each is a valid measurement at that assumption. Only
+the marker for which one the engine actually uses moved. These figures were
+produced by the research work and nothing in this repo recomputes them, so the
+label was corrected rather than the numbers — regenerating this table means
+rerunning that study under the new convention.
 
 ---
 

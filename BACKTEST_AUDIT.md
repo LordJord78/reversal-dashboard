@@ -149,7 +149,15 @@ correct. Latent only.
 
 ---
 
-### 6. `SLIPPAGE_BP = 0.2` is optimistic for market-on-open / market-on-close fills — LOW
+### 6. `SLIPPAGE_BP = 0.2` is optimistic for market-on-open / market-on-close fills — LOW — **RESOLVED**
+
+**Resolved:** `cost_bp` now charges `SLIPPAGE_BP` once per print rather than once
+per round trip, so a trade pays 0.4bp rather than 0.2bp on top of the spread. The
+allowance itself is unchanged and is still an assumption; what was wrong was
+applying it to one fill when the rule transacts two. Costs 0.4bp a trade: QQQ SR
+0.716 → 0.713, XLK 0.705 → 0.701, and both controls move further negative. The
+`SR @ 0.2bp` column below is therefore the old convention — read it as the
+per-print figure, and the shipped column is now what used to be labelled 0.4bp.
 
 Breakeven slippage (SR → 0), charged per unit of position on top of the spread:
 

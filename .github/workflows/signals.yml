@@ -31,6 +31,14 @@ jobs:
       - name: install deps
         run: pip install yfinance
 
+      # Before anything writes to data/. These assert that signals.py and
+      # backtest.py score a shared session identically and that the unsettled
+      # bar guard still drops what it is supposed to -- the two faults that
+      # would publish a confident wrong number rather than an obvious failure.
+      # Synthetic data only, so a vendor outage cannot turn this red.
+      - name: engine tests
+        run: python -m unittest discover -s engine -p 'test_*.py' -v
+
       - name: compute signals
         run: python engine/signals.py
 
