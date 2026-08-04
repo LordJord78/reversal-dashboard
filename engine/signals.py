@@ -13,6 +13,13 @@ working signal; if it ever does, this pipeline is broken.
 
 Runs in GitHub Actions on a weekday cron. No broker connection needed --
 everything here comes from public daily open/close bars.
+
+Also writes data/prices.json: the same daily bars the signal is computed
+from, published for the dashboard to chart. This is deliberate -- the page
+is static, so it cannot call a price API at render time (no server to hold
+a key, and the free feeds block browser requests outright). Publishing the
+bars we already downloaded means the chart and the signal can never
+disagree, which a second live feed could not guarantee.
 """
 
 import json, os, statistics, sys, urllib.request, io, csv
@@ -21,6 +28,11 @@ from datetime import datetime, timezone
 VOL_WINDOW = 60
 THRESHOLD  = 2.0
 CAP        = 2.0
+
+# How much daily history to publish for the dashboard charts. The signal
+# itself only ever looks at the last VOL_WINDOW + 2 sessions, so this is
+# purely for the price-history view.
+HISTORY_SESSIONS = 520          # ~2 trading years
 
 # tier: tradeable | watch | control
 # stats are from the research note: cap 2.0, vol-scaled cost, 1993-2026
@@ -50,14 +62,14 @@ DATA = os.path.join(ROOT, "data")
 
 
 # ---------------------------------------------------------------- data
-def from_yfinance(tickers):
+def from_yfinance(tickers, period="2y"):
     try:
         import yfinance as yf
     except ImportError:
         return {}
     out = {}
     try:
-        df = yf.download(tickers, period="1y", auto_adjust=False,
+        df = yf.download(tickers, period=period, auto_adjust=False,
                          progress=False, group_by="ticker")
     except Exception as e:
         print(f"yfinance failed: {e}", file=sys.stderr)
@@ -77,7 +89,8 @@ def from_yfinance(tickers):
     return out
 
 
-def from_stooq(tickers):
+def from_stooq(tickers, limit=None):
+    """limit=None keeps the full archive -- backtest.py needs it."""
     out = {}
     for tk in tickers:
         try:
@@ -91,18 +104,19 @@ def from_stooq(tickers):
                 except (ValueError, KeyError, TypeError):
                     continue
             if len(rows) > VOL_WINDOW + 5:
-                out[tk] = sorted(rows)[-400:]
+                rows = sorted(rows)
+                out[tk] = rows[-limit:] if limit else rows
         except Exception as e:
             print(f"stooq {tk} failed: {e}", file=sys.stderr)
     return out
 
 
-def load_all(tickers):
-    data = from_yfinance(tickers)
+def load_all(tickers, period="2y", limit=HISTORY_SESSIONS + 40):
+    data = from_yfinance(tickers, period=period)
     missing = [t for t in tickers if t not in data]
     if missing:
         print(f"falling back to stooq for {missing}", file=sys.stderr)
-        data.update(from_stooq(missing))
+        data.update(from_stooq(missing, limit=limit))
     return data
 
 
@@ -135,6 +149,29 @@ def compute(rows):
     }
 
 
+# ---------------------------------------------------------------- prices
+def write_prices(raw, generated_at):
+    """Publish the daily bars for the dashboard's price-history view.
+
+    Parallel arrays rather than a list of objects -- same information, less
+    than half the bytes, and the page is fetching this on every load.
+    """
+    series = {}
+    for tk, rows in raw.items():
+        tail = rows[-HISTORY_SESSIONS:]
+        series[tk] = {
+            "dates": [d for d, _, _ in tail],
+            "open":  [round(o, 2) for _, o, _ in tail],
+            "close": [round(c, 2) for _, _, c in tail],
+        }
+    payload = {"generated_at": generated_at, "sessions": HISTORY_SESSIONS,
+               "series": series}
+    with open(os.path.join(DATA, "prices.json"), "w") as f:
+        json.dump(payload, f, separators=(",", ":"))
+    counts = ", ".join(f"{tk} {len(s['dates'])}" for tk, s in sorted(series.items()))
+    print(f"prices.json: {counts}")
+
+
 def main():
     os.makedirs(DATA, exist_ok=True)
     tickers = [t for t, _, _ in UNIVERSE]
@@ -157,8 +194,9 @@ def main():
         last_session = last_session or sig["prev_session"]
         instruments.append({"ticker": tk, "tier": tier, "stats": stats, **sig})
 
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     payload = {
-        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": generated_at,
         "last_session": last_session,
         "threshold": THRESHOLD,
         "cap": CAP,
@@ -167,6 +205,8 @@ def main():
 
     with open(os.path.join(DATA, "signals.json"), "w") as f:
         json.dump(payload, f, indent=2)
+
+    write_prices(raw, generated_at)
 
     hist_path = os.path.join(DATA, "history.json")
     hist = []

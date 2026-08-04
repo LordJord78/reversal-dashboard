@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade alerts — session reversal</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./"><span class="mark"></span><span>Session reversal</span></a>
+    <nav class="nav">
+      <a class="navlink" href="./">Signals</a>
+      <a class="navlink" href="alerts.html" aria-current="page">Trade alerts</a>
+      <span class="navsep"></span>
+      <a class="navlink" id="nav-QQQ" href="ticker.html?t=QQQ">QQQ</a>
+      <a class="navlink" id="nav-SPY" href="ticker.html?t=SPY">SPY</a>
+      <a class="navlink" id="nav-XLK" href="ticker.html?t=XLK">XLK</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <h1>Trade alerts</h1>
+  <p class="sub" id="stamp">loading…</p>
+  <div id="alertbox"></div>
+
+  <div class="card explain">
+    <p style="margin:0 0 10px"><strong>An alert is a session where the rule
+    triggered.</strong> The previous session moved open&rarr;close by at least
+    2 standard deviations of its own 60-day range — the condition this strategy
+    trades. Each row below is one trigger: in at that session's open, out at its
+    close, same day. No overnight hold.</p>
+    <p class="note" style="margin:0"><strong>Nothing is sent anywhere.</strong>
+    This is a record of when the rule fired, rebuilt from the same engine that
+    produces the daily signal — not a notification feed. Want alerts actually
+    delivered to email or your phone? That's a separate build; ask and I'll wire it up.</p>
+    <p class="note" style="margin:10px 0 0"><strong>Control fires are normal.</strong>
+    z is scaled by each instrument's own volatility, so TLT and GLD trigger about as
+    often as anything else — roughly 12–15 times a year. They are controls because
+    trading them earns nothing (SR −0.17 and −0.09 over the full history), not because
+    they stay quiet. They're listed here, marked <em>do not trade</em>, and excluded
+    from every performance figure. The thing that would actually signal a broken
+    pipeline is a control developing <em>real edge</em> — check that on its
+    <a href="ticker.html?t=TLT">backtest page</a>, not from a handful of recent fires.</p>
+    <details style="margin-top:12px">
+      <summary>How to read a row</summary>
+      <div class="note" style="margin-top:8px">
+        <strong>Fired</strong> is the session whose move triggered the rule.
+        <strong>Traded</strong> is the next session, when the position was actually
+        held — that gap is deliberate, since you can't act on a close until the
+        following open.<br>
+        <strong>Entry</strong> and <strong>exit</strong> are that traded session's
+        open and close: the fills the rule assumes.
+        <strong>O&rarr;C</strong> is how the instrument itself moved.
+        <strong>Net</strong> is what the position returned after costs — it flips
+        sign against O&rarr;C on shorts, which is the point of the strategy.<br>
+        <strong>Size</strong> is leverage, not shares: 2.00x means twice account
+        equity, capped there.
+      </div>
+    </details>
+  </div>
+
+  <h2>Firing now</h2>
+  <div id="pending"></div>
+
+  <h2>Last 60 days</h2>
+  <div id="tiles"></div>
+
+  <div class="card" style="margin-top:10px">
+    <div class="row" style="margin-bottom:14px">
+      <span class="lbl">instrument</span>
+      <div class="chips" id="f-tick"></div>
+    </div>
+    <div id="table"></div>
+  </div>
+
+  <p class="note">Entry is the traded session's open and exit is its close — the fills
+  the rule assumes, not the fills you got. Your own log lives on the
+  <a href="./">signals page</a>; where the two disagree is your slippage.</p>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+let AL = null, DATA = null, fTier = 'all', fTick = 'all';
+
+function onTradesChanged(){ render(); }
+
+/* Did you log a trade on this instrument for this session? */
+function mineFor(a){
+  return trades().find(t => t.ticker === a.ticker &&
+    (t.entryDate||'').slice(0,10) === a.d) || null;
+}
+
+function tierPill(a){
+  if(!a.actionable) return '<span class="pill no" style="color:var(--down);'+
+    'border-color:rgba(192,39,60,.4)">control</span>';
+  return `<span class="tier" style="margin:0">${a.tier}</span>`;
+}
+
+/* ------------------------------------------------------------------ pending */
+function renderPending(){
+  const p = (AL && AL.pending) || [];
+  if(!p.length){
+    $('pending').innerHTML = `<div class="card"><div class="emptybox">
+      Nothing firing for the next session. The rule is flat.</div></div>`;
+    return;
+  }
+  $('pending').innerHTML = p.map(a => `
+    <div class="card fcard ${a.actionable?'fires':''}" style="margin-bottom:10px">
+      <div class="fhead">
+        <div><a class="tick" href="ticker.html?t=${a.ticker}">${a.ticker}</a>
+          ${tierPill(a)}</div>
+        <span class="pill go">${a.side.toUpperCase()} ${Math.abs(a.pos).toFixed(2)}x</span>
+      </div>
+      <div class="frow" style="border-top:none;padding-top:4px">
+        <div><div class="lbl">signal session</div><div class="val">${a.signal_session}</div></div>
+        <div><div class="lbl">z</div><div class="val">${a.z>=0?'+':''}${a.z.toFixed(2)}</div></div>
+        <div><div class="lbl">reference price</div><div class="val">$${a.ref_price.toFixed(2)}</div></div>
+        <div><div class="lbl">size</div>
+          <div class="val">${(Math.abs(a.pos)*acct()/a.ref_price).toFixed(1)} sh</div></div>
+      </div>
+      <p class="note">${a.actionable
+        ? 'Enter at the next open, exit at that close. Entry and exit prices land here once the session completes.'
+        : '<span class="err">Control instrument — do not trade this. The trigger is normal; the tier exists to confirm the rule earns nothing here.</span>'}</p>
+    </div>`).join('');
+}
+
+/* ------------------------------------------------------------------ filters */
+function filtered(){
+  if(!AL) return [];
+  return AL.alerts.filter(a =>
+    (fTier === 'all' || (fTier === 'actionable' ? a.actionable : a.tier === fTier)) &&
+    (fTick === 'all' || a.ticker === fTick));
+}
+
+function renderFilters(){
+  const ticks = ['all', ...new Set(AL.alerts.map(a => a.ticker))];
+  $('f-tick').innerHTML = ticks.map(t =>
+    `<button class="chip" aria-pressed="${t===fTick}" onclick="setTick('${t}')">${t}</button>`).join('');
+}
+/* clicking the tile you're already on clears back to everything */
+function setTier(k){ fTier = (fTier === k && k !== 'all') ? 'all' : k; render(); }
+function setTick(t){ fTick = t; render(); }
+
+/* ------------------------------------------------------------------ summary */
+function renderTiles(){
+  /* Counts come from the instrument-filtered set only, so they stay put as
+     you move between tiers -- a filter whose own labels change under you is
+     unreadable. The performance figures below use the full filter. */
+  const byTick = AL.alerts.filter(a => fTick === 'all' || a.ticker === fTick);
+  const all = filtered();
+  const act = all.filter(a => a.actionable);
+  const rets = act.map(a => a.net);
+  const wins = rets.filter(v => v > 0).length;
+  const avg  = rets.length ? rets.reduce((a,b)=>a+b,0)/rets.length : null;
+  let v = 1; act.slice().reverse().forEach(a => v *= (1 + a.net));
+  const taken = all.filter(mineFor).length;
+
+  const count = t => byTick.filter(a => a.tier === t).length;
+  const filters = [
+    ['alerts',    byTick.length, 'all'],
+    ['tradeable', count('tradeable'), 'tradeable'],
+    ['watch',     count('watch'), 'watch'],
+    ['control',   count('control'), 'control'],
+  ];
+  const stats = [
+    ['hit rate',   rets.length ? (wins/rets.length*100).toFixed(0)+'%' : '—'],
+    ['avg net',    avg !== null ? bp(avg) : '—'],
+    ['compounded', act.length ? pct(v-1) : '—'],
+    ['you logged', `${taken} / ${all.length}`],
+  ];
+
+  $('tiles').innerHTML = `<div class="tiles">${
+    filters.map(([l,n,key]) => `
+      <button class="tile" aria-pressed="${key===fTier}" onclick="setTier('${key}')">
+        <div class="lbl">${l}</div><div class="big">${n}</div>
+        <div class="hint">${key===fTier ? (key==='all'?'showing all':'click to clear')
+                                         : 'click to filter'}</div>
+      </button>`).join('')}${
+    stats.map(([l,x]) => `
+      <div class="tile"><div class="lbl">${l}</div><div class="big">${x}</div></div>`).join('')}
+    </div>
+    <p class="note">The first four are filters — tap one to narrow the table below.
+    Hit rate, average and compounded cover the <strong>actionable</strong> rows only:
+    control fires are counted but never included in performance, because acting on one
+    would be the error.</p>`;
+}
+
+/* ------------------------------------------------------------------ table */
+function renderTable(){
+  const rows = filtered();
+  if(!rows.length){
+    $('table').innerHTML = `<div class="emptybox">No alerts match this filter.</div>`;
+    return;
+  }
+  $('table').innerHTML = `<div class="scroll"><table><thead><tr>
+    <th title="The session the position was held. The signal fired the session before.">Traded</th>
+    <th>Instrument</th>
+    <th title="tradeable cleared every test; watch is shown for context; control triggers normally but must earn nothing">Tier</th>
+    <th class="num" title="Standard deviations of the prior session's open-to-close move">z</th>
+    <th>Side</th>
+    <th class="num" title="Leverage, not share count. Capped at 2x.">Size</th>
+    <th class="num" title="That session's open — where the rule assumes you got in">Entry</th>
+    <th class="num" title="That session's close — where the rule assumes you got out">Exit</th>
+    <th class="num" title="How the instrument moved, open to close">O&rarr;C</th>
+    <th class="num" title="What the position returned after spread and slippage">Net</th>
+    <th title="Whether you logged a trade of your own on this instrument that day">You</th>
+    </tr></thead><tbody>` +
+    rows.map(a => {
+      const move = a.exit/a.entry - 1;
+      const mine = mineFor(a);
+      return `<tr class="${!a.actionable ? '' : (mine ? 'mine' : '')}">
+        <td>${a.d}<div class="meta" style="font-size:11px">fired ${a.sd}</div></td>
+        <td><a href="ticker.html?t=${a.ticker}"><strong>${a.ticker}</strong></a></td>
+        <td>${tierPill(a)}</td>
+        <td class="num">${a.z>=0?'+':''}${a.z.toFixed(2)}</td>
+        <td><span class="pill ${a.side==='short'?'short':'buy'}">${a.side}</span></td>
+        <td class="num">${Math.abs(a.pos).toFixed(2)}x</td>
+        <td class="num">$${a.entry.toFixed(2)}</td>
+        <td class="num">$${a.exit.toFixed(2)}</td>
+        <td class="num ${cls(move)}">${pct(move)}</td>
+        <td class="num ${cls(a.net)}"><strong>${bp(a.net)}</strong></td>
+        <td>${!a.actionable
+          ? '<span class="meta" style="font-size:12px">n/a</span>'
+          : mine
+            ? `<span class="pill go">taken</span>`
+            : '<span class="meta" style="font-size:12px">—</span>'}</td>
+      </tr>`;
+    }).join('') + `</tbody></table></div>
+    <p class="note">${rows.length} alerts, newest first.
+    <strong>You</strong> is matched from your local trade log by instrument and date —
+    it only knows about trades you logged on this browser.</p>`;
+}
+
+function render(){
+  if(!AL) return;
+  renderFilters(); renderPending(); renderTiles(); renderTable();
+}
+
+/* ------------------------------------------------------------------ boot */
+Promise.all([getJSON('data/alerts.json'), getJSON('data/signals.json')])
+  .then(([al, sig]) => {
+    AL = al; DATA = sig;
+    if(!AL){
+      $('stamp').textContent = '';
+      $('alertbox').innerHTML = `<div class="banner">No <code>data/alerts.json</code> yet.
+        It is written by <strong>engine/backtest.py</strong> — run the signals workflow
+        from the Actions tab.</div>`;
+      $('pending').innerHTML = $('tiles').innerHTML = '';
+      $('table').innerHTML = '';
+      return;
+    }
+    $('stamp').textContent =
+      `${AL.alerts.length} alerts from ${AL.from} to ${AL.through} · ` +
+      `${AL.pending.length} firing now · generated ${AL.generated_at}`;
+
+    $('alertbox').innerHTML = storageWarning();
+    render();
+  })
+  .catch(err => {
+    $('stamp').textContent = '';
+    $('alertbox').innerHTML = `<div class="banner">Could not load alert data (${err}).</div>`;
+  });
+</script>
+</body>
+</html>

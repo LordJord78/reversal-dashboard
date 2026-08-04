@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ticker — session reversal</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./"><span class="mark"></span><span>Session reversal</span></a>
+    <nav class="nav">
+      <a class="navlink" href="./">Signals</a>
+      <a class="navlink" href="alerts.html">Trade alerts</a>
+      <span class="navsep"></span>
+      <a class="navlink" id="nav-QQQ" href="ticker.html?t=QQQ">QQQ</a>
+      <a class="navlink" id="nav-SPY" href="ticker.html?t=SPY">SPY</a>
+      <a class="navlink" id="nav-XLK" href="ticker.html?t=XLK">XLK</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <h1 id="title">…</h1>
+  <p class="sub" id="stamp"></p>
+  <div id="alerts"></div>
+
+  <div class="chips" style="margin:18px 0 6px" id="nav"></div>
+
+  <h2>Live chart</h2>
+  <div class="tvwrap"><div class="tradingview-widget-container" id="tv"></div></div>
+  <div class="tvnote">
+    <span>Live prices via TradingView. Every other number on this page comes from
+      the repo's own published data, not from this chart.</span>
+    <span id="tvattr"></span>
+  </div>
+
+  <h2>Today's signal</h2>
+  <div id="signal"></div>
+
+  <h2>My position</h2>
+  <div id="mine"></div>
+
+  <h2>Strategy record</h2>
+  <div id="record"></div>
+
+  <h2>Equity curve</h2>
+  <div class="card">
+    <div class="row" style="margin-bottom:12px">
+      <div class="chips" id="eq-mode"></div>
+      <div class="spacer"></div>
+      <span class="meta" id="eq-note"></span>
+    </div>
+    <div id="eq"></div>
+  </div>
+
+  <h2>Year by year</h2>
+  <div id="years"></div>
+
+  <h2>Every trade the rule took</h2>
+  <div id="alltrades"></div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const TK = (new URLSearchParams(location.search).get('t') || 'QQQ').toUpperCase();
+let DATA = null, PRICES = null, BT = null, eqMode = 'n';
+
+/* ------------------------------------------------------------------ helpers */
+const inst   = () => DATA ? DATA.instruments.find(i => i.ticker === TK) : null;
+const sers   = () => PRICES && PRICES.series ? PRICES.series[TK] : null;
+function mark(){
+  const s = sers();
+  if(s && s.close.length) return s.close[s.close.length-1];
+  const i = inst();
+  return i && i.price ? i.price : null;
+}
+function onTradesChanged(){ renderMine(); renderAllTrades(); }
+
+/* ------------------------------------------------------------------ chrome */
+function renderNav(){
+  const list = DATA ? DATA.instruments.map(i => i.ticker) : FOCUS;
+  $('nav').innerHTML = list.map(t =>
+    `<a class="chip" aria-pressed="${t===TK}" href="ticker.html?t=${t}">${t}</a>`).join('');
+}
+
+/* The only third-party thing on this page. It is wrapped because a failure in
+   TradingView's embed must not stop the signal and the backtest from rendering
+   -- those are the numbers you'd actually act on. */
+function mountTV(){
+  const sym = TV_SYM[TK] || TK;
+  const dark = !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const holder = document.createElement('div');
+  holder.className = 'tradingview-widget-container__widget';
+  $('tv').appendChild(holder);
+  const s = document.createElement('script');
+  s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+  s.async = true;
+  s.innerHTML = JSON.stringify({
+    autosize: true, symbol: sym, interval: 'D', timezone: 'Etc/UTC',
+    theme: dark ? 'dark' : 'light', style: '1', locale: 'en',
+    withdateranges: true, hide_side_toolbar: true, allow_symbol_change: false,
+    save_image: false, enable_publishing: false,
+    support_host: 'https://www.tradingview.com'
+  });
+  $('tv').appendChild(s);
+  $('tvattr').innerHTML =
+    `<a href="https://www.tradingview.com/symbols/${sym.replace(':','-')}/"
+        rel="noopener nofollow" target="_blank">${TK} chart</a> by TradingView`;
+}
+
+/* ------------------------------------------------------------------ signal */
+function renderSignal(){
+  const i = inst();
+  if(!i){ $('signal').innerHTML = `<div class="card meta">${TK} isn't in the universe.</div>`; return; }
+  if(i.error){ $('signal').innerHTML = `<div class="card err">${esc(i.error)}</div>`; return; }
+
+  const fires = i.action && i.action !== 'none';
+  const px = mark(), shares = fires ? Math.abs(i.position)*acct()/px : 0;
+  $('signal').innerHTML = `<div class="card ${fires?'fires':''}">
+    <div class="fhead">
+      <div><span class="tick">${i.ticker}</span><span class="tier">${i.tier}</span></div>
+      ${fires ? `<span class="pill go">${i.action.toUpperCase()} ${Math.abs(i.position).toFixed(2)}x</span>`
+              : '<span class="pill no">no trade</span>'}
+    </div>
+    <div class="px">$${(px??0).toFixed(2)}</div>
+    <div class="chg"><span class="${cls(i.prev_return)}">${pct(i.prev_return)}</span>
+      <span class="meta">prior session O&rarr;C</span></div>
+    <div class="frow">
+      <div><div class="lbl">z score</div>
+        <div class="zv ${fires?'hot':''}">${i.z>=0?'+':''}${i.z.toFixed(2)}</div></div>
+      <div><div class="lbl">${fires?'size':'trigger'}</div>
+        <div class="val">${fires ? shares.toFixed(1)+' sh' : '±'+(i.trigger_up*100).toFixed(2)+'%'}</div></div>
+      <div><div class="lbl">60d vol</div><div class="val">${(i.vol*100).toFixed(2)}%</div></div>
+    </div>
+    ${zMeter(i.z, DATA.threshold)}
+    ${fires && i.tier !== 'control' ? `<div class="row" style="margin-top:16px">
+      <button class="primary" onclick="logTrade()">Log this trade</button>
+      <span class="meta">enter at open · exit at close</span></div>` : ''}
+    ${fires && i.tier === 'control' ? `<p class="note err">Control instrument — do not
+      trade this. The trigger itself is normal; the tier exists to confirm the rule
+      earns nothing here.</p>` : ''}
+  </div>`;
+}
+
+function logTrade(){
+  const i = inst(); if(!i) return;
+  const px = mark() || i.price;
+  const size = (Math.abs(i.position)*acct()/px).toFixed(2);
+  const entry = prompt(`Entry fill for ${TK} (${i.action} ${size} shares)`, px.toFixed(2));
+  if(entry === null) return;
+  const en = parseFloat(entry);
+  if(!isFinite(en) || en <= 0){ alert('not a valid price'); return; }
+  const t = trades();
+  t.push({id:uid(), ticker:TK, side: i.action==='buy'?'buy':'short',
+          size: Number(size), entry: en, entryDate: today(), exit:null, exitDate:null});
+  saveTrades(sortTrades(t));
+}
+
+/* ------------------------------------------------------------------ my trades */
+function renderMine(){
+  const mine = trades().filter(t => t.ticker === TK);
+  if(!mine.length){
+    $('mine').innerHTML = `<div class="card"><div class="emptybox">
+      Nothing logged for ${TK} yet.</div></div>`;
+    return;
+  }
+  const m = mark();
+  const open = mine.filter(isOpen), done = mine.filter(t => !isOpen(t));
+  const row = t => {
+    const r = tradeRet(t, m);
+    const pl = (r !== null && t.size) ? r*t.entry*t.size : null;
+    return `<tr class="${isOpen(t)?'hl':''}">
+      <td class="meta">${esc(isOpen(t) ? t.entryDate : (t.exitDate||t.entryDate))}</td>
+      <td><span class="pill ${t.side==='short'?'short':'buy'}">${t.side}</span></td>
+      <td class="num">${t.size ?? '—'}</td>
+      <td class="num">$${Number(t.entry).toFixed(2)}</td>
+      <td class="num">${isOpen(t) ? (m!==null?'$'+m.toFixed(2):'—') : '$'+Number(t.exit).toFixed(2)}</td>
+      <td class="num ${r===null?'':cls(r)}"><strong>${r===null?'—':pct(r)}</strong></td>
+      <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
+      <td>${isOpen(t) ? '<span class="pill go">open</span>' : '<span class="meta">closed</span>'}</td>
+      <td class="num">${isOpen(t)
+        ? `<button class="mini" onclick="closeTrade('${t.id}', ${m||0})">close</button>` : ''}
+        <button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+  };
+  const rets = done.map(t => tradeRet(t)).filter(v => v !== null);
+  const avg  = rets.length ? rets.reduce((a,b)=>a+b,0)/rets.length : null;
+  const noteAvg = BT ? BT.computed.avg_bp : (inst()?.stats.avg_bp ?? null);
+
+  $('mine').innerHTML = `<div class="card scroll"><table><thead><tr>
+    <th>Date</th><th>Side</th><th class="num">Size</th><th class="num">Entry</th>
+    <th class="num">Exit / mark</th><th class="num">Return</th><th class="num">P&amp;L</th>
+    <th>Status</th><th></th></tr></thead>
+    <tbody>${mine.map(row).join('')}</tbody></table>
+    <p class="note">${open.length} open · ${done.length} closed${
+      avg !== null ? ` · your realised avg <strong class="${cls(avg)}">${bp(avg)}</strong>` +
+        (noteAvg !== null ? ` vs the rule's backtested <strong>+${noteAvg}bp</strong> on ${TK}` : '') : ''}.
+    Open positions mark against the last published close, not the live chart above.</p></div>`;
+}
+
+/* ------------------------------------------------------------------ backtest */
+function divergence(mine, theirs){
+  if(mine === null || theirs === null || mine === undefined || theirs === undefined)
+    return '<span class="meta">—</span>';
+  const d = mine - theirs;
+  const rel = Math.abs(theirs) > 1e-9 ? Math.abs(d/theirs) : Math.abs(d);
+  const k = rel < 0.15 ? 'ok' : rel < 0.4 ? 'off' : 'bad';
+  return `<span class="delta ${k}">${d>=0?'+':''}${d.toFixed(2)}</span>`;
+}
+
+function renderRecord(){
+  if(!BT){
+    $('record').innerHTML = `<div class="card"><div class="emptybox">
+      No backtest published for ${TK} yet.<br>
+      Run <strong>engine/backtest.py</strong> — the signals workflow does this
+      automatically once you commit the updated <code>signals.yml</code>.</div></div>`;
+    ['eq','years','alltrades'].forEach(id => $(id).innerHTML = '');
+    return;
+  }
+  const c = BT.computed, cov = BT.coverage, note = BT.note_stats, p = BT.params;
+  const tiles = [
+    ['trades', c.trades], ['per year', c.per_year],
+    ['avg / trade', bp(c.avg_bp/1e4)], ['hit rate', (c.hit_rate*100).toFixed(1)+'%'],
+    ['sharpe', c.sr ?? '—'], ['total return', pct(c.total_return)],
+    ['max drawdown', pct(c.max_dd)], ['best', pct(c.best)], ['worst', pct(c.worst)],
+    ['long / short', c.long + ' / ' + c.short],
+  ];
+  $('record').innerHTML = `
+    <div class="tiles">${tiles.map(([l,v]) =>
+      `<div class="tile"><div class="lbl">${l}</div><div class="big">${v}</div></div>`).join('')}</div>
+    <p class="note">${cov.sessions.toLocaleString()} sessions from
+      <strong>${cov.first_session}</strong> to <strong>${cov.last_session}</strong>
+      (${cov.years} years). Net of ${p.spread_bp ?? '—'}bp spread plus
+      ${p.slippage_bp}bp assumed slippage, charged on the levered notional.
+      Gross avg was ${bp(c.avg_bp_gross/1e4)} at SR ${c.sr_gross ?? '—'}.</p>
+
+    <div class="card" style="margin-top:14px">
+      <div class="lbl" style="margin-bottom:10px">Recomputed vs the research note</div>
+      <table class="recon"><thead><tr><th>Metric</th><th class="num">This backtest</th>
+        <th class="num">Research note</th><th class="num">Diff</th></tr></thead><tbody>
+        <tr><td>Sharpe</td><td class="num">${c.sr ?? '—'}</td>
+          <td class="num">${note.sr ?? '—'}</td><td class="num">${divergence(c.sr, note.sr)}</td></tr>
+        <tr><td>Trades / year</td><td class="num">${c.per_year}</td>
+          <td class="num">${note.tpy ?? '—'}</td><td class="num">${divergence(c.per_year, note.tpy)}</td></tr>
+        <tr><td>Avg per trade (bp)</td><td class="num">${c.avg_bp}</td>
+          <td class="num">${note.avg_bp ?? '—'}</td><td class="num">${divergence(c.avg_bp, note.avg_bp)}</td></tr>
+        <tr><td>Worst trade</td><td class="num">${(c.worst*100).toFixed(1)}%</td>
+          <td class="num">${note.worst_trade !== null && note.worst_trade !== undefined
+            ? note.worst_trade+'%' : '—'}</td>
+          <td class="num">${divergence(c.worst*100, note.worst_trade)}</td></tr>
+      </tbody></table>
+      <p class="note">The note's figures come from a longer window and a
+      volatility-scaled cost model that isn't in this repo, so exact agreement was never
+      expected — small gaps are the two methods differing. A gap that <em>grows</em> run
+      over run is the thing to watch: it means live data is drifting from the study the
+      rule was built on.</p>
+    </div>`;
+
+  $('eq-mode').innerHTML = [['n','net of costs'],['g','gross']].map(([k,l]) =>
+    `<button class="chip" aria-pressed="${k===eqMode}" onclick="setEq('${k}')">${l}</button>`).join('');
+  renderEquity();
+  renderYears();
+  renderAllTrades();
+}
+
+function setEq(m){ eqMode = m; renderRecord(); }
+
+function renderEquity(){
+  const t = BT.trades;
+  let v = 1; const eq = t.map(x => (v *= (1 + x[eqMode])));
+  const peak = eq.map((_,i) => Math.max(...eq.slice(0, i+1)));
+  $('eq-note').textContent =
+    `$1 → $${eq[eq.length-1].toFixed(2)} over ${t.length} trades`;
+  mountChart($('eq'), {
+    values: eq, id: 'eq', baseline: 1,
+    axHi: '$' + Math.max(...eq).toFixed(2), axLo: '$' + Math.min(...eq).toFixed(2),
+    xFirst: t[0].d, xLast: t[t.length-1].d,
+    tip: i => `<strong>${t[i].d}</strong> · trade ${i+1}<br>
+      ${t[i].side} ${Math.abs(t[i].pos).toFixed(2)}x on z ${t[i].z>=0?'+':''}${t[i].z}<br>
+      <span class="${cls(t[i][eqMode])}">${bp(t[i][eqMode])}</span>
+      <span class="meta">→ $${eq[i].toFixed(2)}</span><br>
+      <span class="meta">drawdown ${pct(eq[i]/peak[i] - 1)}</span>`
+  });
+}
+
+function renderYears(){
+  const y = BT.by_year;
+  $('years').innerHTML = `<div class="card scroll tall"><table><thead><tr>
+    <th>Year</th><th class="num">Trades</th><th class="num">Avg</th>
+    <th class="num">Hit rate</th><th class="num">Return</th></tr></thead><tbody>` +
+    y.slice().reverse().map(r => `<tr>
+      <td><strong>${r.year}</strong></td>
+      <td class="num">${r.trades}</td>
+      <td class="num ${cls(r.avg_bp)}">${r.avg_bp>=0?'+':''}${r.avg_bp}bp</td>
+      <td class="num">${(r.hit*100).toFixed(0)}%</td>
+      <td class="num ${cls(r.ret)}"><strong>${pct(r.ret)}</strong></td></tr>`).join('') +
+    '</tbody></table></div>';
+}
+
+function renderAllTrades(){
+  const t = BT.trades;
+  /* mark the backtest rows that line up with something you actually logged */
+  const mine = new Set(trades().filter(x => x.ticker === TK)
+    .map(x => (x.entryDate||'').slice(0,10)));
+  $('alltrades').innerHTML = `<div class="card scroll tall"><table><thead><tr>
+    <th>Traded</th><th>Fired on</th><th class="num">z</th><th>Side</th>
+    <th class="num">Size</th><th class="num">Open</th><th class="num">Close</th>
+    <th class="num">Gross</th><th class="num">Net</th></tr></thead><tbody>` +
+    t.slice().reverse().map(x => `<tr class="${mine.has(x.d)?'mine':''}">
+      <td>${x.d}</td><td class="meta">${x.sd}</td>
+      <td class="num">${x.z>=0?'+':''}${x.z.toFixed(2)}</td>
+      <td><span class="pill ${x.side==='short'?'short':'buy'}">${x.side}</span></td>
+      <td class="num">${Math.abs(x.pos).toFixed(2)}x</td>
+      <td class="num">$${x.o.toFixed(2)}</td><td class="num">$${x.c.toFixed(2)}</td>
+      <td class="num ${cls(x.g)}">${bp(x.g)}</td>
+      <td class="num ${cls(x.n)}"><strong>${bp(x.n)}</strong></td></tr>`).join('') +
+    `</tbody></table></div>
+    <p class="note">${t.length} trades, newest first.${
+      mine.size ? ' Rows with a purple edge are days you logged a trade of your own.' : ''}</p>`;
+}
+
+/* ------------------------------------------------------------------ boot */
+renderNav();
+const hdr = $('nav-' + TK);
+if(hdr) hdr.setAttribute('aria-current', 'page');
+try{ mountTV(); }
+catch(e){
+  console.warn('TradingView embed failed', e);
+  $('tv').innerHTML = `<div class="emptybox" style="margin:20px">
+    Live chart unavailable. Everything below is unaffected — it comes from the
+    repo's own data.</div>`;
+}
+
+Promise.all([
+  getJSON('data/signals.json', true),
+  getJSON('data/prices.json'),
+  getJSON(`data/backtest/${TK}.json`)
+]).then(([sig, px, bt]) => {
+  DATA = sig; PRICES = px; BT = bt;
+  const i = inst();
+  document.title = `${TK} — session reversal`;
+  $('title').textContent = TK;
+  $('stamp').textContent = DATA
+    ? `last session ${DATA.last_session} · generated ${DATA.generated_at} · ` +
+      `threshold |z| ≥ ${DATA.threshold} · cap ${DATA.cap}x` : '';
+  const hrs = (Date.now() - new Date(DATA.generated_at).getTime())/36e5;
+  $('alerts').innerHTML = storageWarning() +
+    (i && i.tier === 'control'
+      ? `<div class="banner">${TK} is a <strong>control</strong> instrument. It triggers
+         about as often as the tradeable names — that's expected. What matters is that
+         its record below looks like <em>noise</em>: a Sharpe near zero and no
+         persistent edge. If it ever starts looking like a real strategy, that's a
+         finding about the pipeline, not an opportunity. Never trade it.</div>` : '') +
+    (hrs > 36
+      ? `<div class="banner">Signal data is ${Math.floor(hrs/24)} days old — the workflow
+         may not have run.</div>` : '');
+  renderNav();
+  renderSignal();
+  renderMine();
+  renderRecord();
+}).catch(err => {
+  $('title').textContent = TK;
+  $('alerts').innerHTML = `<div class="banner">Could not load data/signals.json (${err}).</div>`;
+});
+
+let rt;
+addEventListener('resize', () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => { if(BT) renderEquity(); }, 200);
+});
+</script>
+</body>
+</html>

@@ -4,72 +4,72 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Session reversal signals</title>
-<style>
-:root{--bg:#fbfbf9;--card:#fff;--line:#e3e2dc;--tx:#12120f;--tx2:#5f5e58;--tx3:#8b8a83;
---go:#0f7a4a;--go-bg:#e7f4ec;--no:#8b8a83;--warn:#9a5c00;--warn-bg:#fdf1dd;--bad:#a32d2d;--bad-bg:#fbeaea}
-@media(prefers-color-scheme:dark){:root{--bg:#141413;--card:#1c1c1a;--line:#302f2c;--tx:#f2f1ec;
---tx2:#a9a89f;--tx3:#7a7973;--go:#4ec98a;--go-bg:#12301f;--warn:#e0a24a;--warn-bg:#2e2311;
---bad:#e87a7a;--bad-bg:#2e1414}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
-.wrap{max-width:920px;margin:0 auto;padding:28px 20px 64px}
-h1{font-size:21px;font-weight:500;margin:0}
-h2{font-size:13px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin:32px 0 10px}
-.sub{color:var(--tx2);font-size:13px;margin:4px 0 0}
-.banner{padding:10px 14px;border-radius:8px;font-size:13px;margin:16px 0;background:var(--warn-bg);color:var(--warn)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:10px}
-.hero{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.tick{font-size:19px;font-weight:500}
-.z{font-size:40px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
-.pill{display:inline-block;padding:4px 11px;border-radius:99px;font-size:12px;font-weight:500}
-.pill.go{background:var(--go-bg);color:var(--go)}
-.pill.no{background:transparent;color:var(--no);border:1px solid var(--line)}
-.meta{color:var(--tx2);font-size:13px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-weight:500;color:var(--tx3);font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line)}
-td{padding:9px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-tr:last-child td{border-bottom:none}
-.num{text-align:right}
-input{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:7px 10px;
-color:var(--tx);font:inherit;font-size:14px}
-button{background:transparent;border:1px solid var(--line);border-radius:7px;padding:7px 13px;
-color:var(--tx);font:inherit;font-size:13px;cursor:pointer}
-button:hover{background:var(--bg)}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.note{font-size:13px;color:var(--tx2);margin:8px 0 0}
-.err{color:var(--bad)}
-</style>
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./"><span class="mark"></span><span>Session reversal</span></a>
+    <nav class="nav">
+      <a class="navlink" href="./" aria-current="page">Signals</a>
+      <a class="navlink" href="alerts.html">Trade alerts</a>
+      <span class="navsep"></span>
+      <a class="navlink" id="nav-QQQ" href="ticker.html?t=QQQ">QQQ</a>
+      <a class="navlink" id="nav-SPY" href="ticker.html?t=SPY">SPY</a>
+      <a class="navlink" id="nav-XLK" href="ticker.html?t=XLK">XLK</a>
+    </nav>
+  </div>
+</header>
 <div class="wrap">
   <h1>Session reversal signals</h1>
   <p class="sub" id="stamp">loading…</p>
   <div id="stale"></div>
 
-  <h2>Tradeable</h2>
-  <div id="trade"></div>
+  <div class="card explain">
+    <p style="margin:0 0 10px"><strong>The rule:</strong> when an instrument's
+    prior session moves open&rarr;close by 2 or more standard deviations of its
+    own 60-day range, take the <em>opposite</em> side at the next open and close
+    it at that close. Same day, no overnight hold.</p>
+    <p class="note" style="margin:0">Below, <strong>z</strong> is how many
+    standard deviations yesterday actually moved, and <strong>trigger</strong> is
+    how far it would have had to move to fire. Anything at |z| ≥ 2 is a trade.
+    Past alerts and their fills live on the
+    <a href="alerts.html">trade alerts page</a>.</p>
+  </div>
+
+  <h2>Focus — QQQ · SPY · XLK</h2>
+  <div class="grid3" id="focus"></div>
+
+  <h2>Price history</h2>
+  <div class="card">
+    <div class="row" style="margin-bottom:14px">
+      <div class="chips" id="ex-ticks"></div>
+      <div class="spacer"></div>
+      <div class="chips" id="ex-range"></div>
+    </div>
+    <div id="ex-body"></div>
+  </div>
 
   <h2>Watch — not traded</h2>
   <div id="watch"></div>
 
-  <h2>Control — must never fire</h2>
+  <h2>Control — must show no edge</h2>
   <div id="ctrl"></div>
   <p class="note">TLT and GLD are the instruments that proved this signal isn't a data
-  artifact. They should stay quiet. If either starts producing trades, the pipeline is
-  broken — stop trading and check the engine.</p>
+  artifact. They <strong>do</strong> trigger — z is scaled by each instrument's own
+  volatility, so they fire about as often as QQQ does. What makes them controls is that
+  trading those triggers earns nothing: SR −0.17 and −0.09 across the full history.
+  The failure mode to watch for isn't a fire, it's a control quietly developing real
+  edge — that would mean the signal is picking up something in the data rather than in
+  the market. Never trade these.</p>
 
-  <h2>Trade log</h2>
+  <h2>Active trades</h2>
+  <div id="active"></div>
+
+  <h2>Closed trades</h2>
   <div class="card">
-    <div class="row" style="margin-bottom:12px">
-      <input id="t-date" type="date" style="width:150px">
-      <input id="t-tick" placeholder="QQQ" style="width:80px">
-      <input id="t-side" placeholder="short / buy" style="width:110px">
-      <input id="t-entry" placeholder="entry" style="width:90px">
-      <input id="t-exit" placeholder="exit" style="width:90px">
-      <button onclick="addTrade()">Add</button>
-    </div>
     <div id="log"></div>
-    <div class="row" style="margin-top:14px">
+    <div class="row" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
       <button onclick="exportTrades()">Export JSON</button>
       <button onclick="document.getElementById('imp').click()">Import</button>
       <input id="imp" type="file" accept=".json" style="display:none" onchange="importTrades(event)">
@@ -78,82 +78,319 @@ button:hover{background:var(--bg)}
     Export to keep a durable copy in your vault.</p>
   </div>
 
+  <h2>Log a trade</h2>
+  <div class="card">
+    <div class="row">
+      <input id="t-date" type="date" style="width:150px" title="entry date">
+      <select id="t-tick" style="width:96px"></select>
+      <select id="t-side" style="width:96px">
+        <option value="short">short</option>
+        <option value="buy">buy</option>
+      </select>
+      <input id="t-size" type="number" step="0.01" placeholder="shares" style="width:96px">
+      <input id="t-entry" type="number" step="0.01" placeholder="entry" style="width:96px">
+      <input id="t-exit" type="number" step="0.01" placeholder="exit (optional)" style="width:130px">
+      <button class="primary" onclick="addTrade()">Add</button>
+    </div>
+    <p class="note">Leave <strong>exit</strong> blank to open the trade — it lands in
+    Active and marks against the last published close until you close it.</p>
+  </div>
+
   <h2>Account</h2>
   <div class="card">
     <div class="row">
       <span class="meta">Equity</span>
-      <input id="acct" type="number" step="1000" style="width:130px" oninput="saveAcct()">
+      <input id="acct" type="number" step="1000" style="width:140px" oninput="saveAcct()">
       <span class="meta">— used only in this browser to size share counts.</span>
     </div>
   </div>
 </div>
 
+<script src="assets/common.js"></script>
 <script>
-const $ = id => document.getElementById(id);
-const pct = v => (v>=0?'+':'') + (v*100).toFixed(2) + '%';
+const RANGES = [['1M',21],['3M',63],['6M',126],['1Y',252],['MAX',null]];
+let DATA = null, PRICES = null, exTicker = 'QQQ', exRange = 126;
 
-function acct(){ return Number(localStorage.getItem('acct') || 25000); }
-function saveAcct(){ localStorage.setItem('acct', $('acct').value || 25000); render(); }
+const inst   = tk => DATA ? DATA.instruments.find(i => i.ticker === tk) : null;
+const series = tk => PRICES && PRICES.series ? PRICES.series[tk] : null;
 
-let DATA = null;
+function mark(tk){
+  const s = series(tk);
+  if(s && s.close.length) return s.close[s.close.length-1];
+  const i = inst(tk);
+  return i && i.price ? i.price : null;
+}
+function closeToClose(tk){
+  const s = series(tk);
+  if(!s || s.close.length < 2) return null;
+  const c = s.close;
+  return c[c.length-1]/c[c.length-2] - 1;
+}
+function saveAcct(){ store.set('acct', $('acct').value || 25000); render(); }
+function onTradesChanged(){ renderActive(); renderLog(); }
 
-function statLine(s){
-  if(s.sr === null || s.sr === undefined) return '';
-  const bits = [`SR ${s.sr.toFixed(2)}`];
-  if(s.sr_ex !== null && s.sr_ex !== undefined) bits.push(`ex-crisis ${s.sr_ex.toFixed(2)}`);
-  if(s.tpy) bits.push(`${s.tpy}/yr`);
-  if(s.avg_bp) bits.push(`avg +${s.avg_bp}bp`);
-  if(s.spread_bp) bits.push(`spread ${s.spread_bp}bp`);
-  return bits.join(' · ');
+/* ------------------------------------------------------------------ cards */
+function sparkline(tk){
+  const s = series(tk);
+  if(!s || s.close.length < 2) return '<div class="meta" style="font-size:12px">no history yet</div>';
+  return chartHTML(s.close.slice(-63), 'sp'+tk, 52);
 }
 
-function heroCard(i){
+function focusCard(tk){
+  const i = inst(tk);
+  if(!i) return `<div class="fcard"><div class="tick">${tk}</div>
+    <p class="meta">not in the universe</p></div>`;
+  if(i.error) return `<div class="fcard"><div class="tick">${tk}</div>
+    <p class="err">${esc(i.error)}</p></div>`;
+
   const fires = i.action && i.action !== 'none';
-  const sh = fires ? Math.abs(i.position) * acct() / i.price : 0;
-  return `<div class="card">
-    <div class="hero">
-      <div>
-        <div class="tick">${i.ticker}</div>
-        <div class="meta">prior session ${pct(i.prev_return)} · vol ${(i.vol*100).toFixed(2)}%</div>
-      </div>
-      <div style="text-align:center">
-        <div class="z">${i.z>=0?'+':''}${i.z.toFixed(2)}</div>
-        <div class="meta">z</div>
-      </div>
-      <div style="text-align:right">
-        ${fires
-          ? `<span class="pill go">${i.action.toUpperCase()} ${Math.abs(i.position).toFixed(2)}x</span>
-             <div class="meta" style="margin-top:8px">${sh.toFixed(1)} shares @ $${i.price}</div>
-             <div class="meta">enter at open · exit at close</div>`
-          : `<span class="pill no">no trade</span>
-             <div class="meta" style="margin-top:8px">needs a session beyond
-             ${pct(i.trigger_up)} / ${pct(i.trigger_dn)}</div>`}
-      </div>
+  const px = mark(tk), ctc = closeToClose(tk);
+  const shares = fires ? Math.abs(i.position)*acct()/(px || i.price) : 0;
+
+  return `<div class="fcard ${fires?'fires':''}">
+    <div class="fhead">
+      <div><a class="tick" href="ticker.html?t=${i.ticker}">${i.ticker}</a>
+        <span class="tier">${i.tier}</span></div>
+      ${fires ? `<span class="pill go">${i.action.toUpperCase()} ${Math.abs(i.position).toFixed(2)}x</span>`
+              : '<span class="pill no">no trade</span>'}
     </div>
-    <div class="meta" style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
-      ${statLine(i.stats)}${i.stats.worst_trade ? ` · worst trade ${i.stats.worst_trade}%` : ''}
+    <div class="px">$${(px??0).toFixed(2)}</div>
+    <div class="chg">
+      <span class="${cls(i.prev_return)}">${pct(i.prev_return)}</span>
+      <span class="meta">O→C</span>
+      ${ctc !== null ? `<span class="sep">·</span>
+        <span class="${cls(ctc)}">${pct(ctc)}</span>
+        <span class="meta">C→C</span>` : ''}
+    </div>
+    <div class="spark">${sparkline(tk)}</div>
+    <div class="frow">
+      <div><div class="lbl">z score</div>
+        <div class="zv ${fires?'hot':''}">${i.z>=0?'+':''}${i.z.toFixed(2)}</div></div>
+      <div><div class="lbl">${fires?'size':'trigger'}</div>
+        <div class="val">${fires ? shares.toFixed(1)+' sh' : '±'+(i.trigger_up*100).toFixed(2)+'%'}</div></div>
+      <div><div class="lbl">vol</div><div class="val">${(i.vol*100).toFixed(2)}%</div></div>
+    </div>
+    ${zMeter(i.z, DATA.threshold)}
+    <div class="stat">${statLine(i.stats)}${
+      i.stats.worst_trade ? ` · worst ${i.stats.worst_trade}%` : ''}</div>
+    <div class="cardact">
+      ${fires ? `<button class="primary block" onclick="prefill('${i.ticker}')">
+        Log this trade</button>` : ''}
+      <a class="meta" href="ticker.html?t=${i.ticker}">live chart &amp; 20yr record &rarr;</a>
     </div>
   </div>`;
 }
 
 function rowsTable(list){
   if(!list.length) return '<div class="card meta">none</div>';
-  return `<div class="card"><table><thead><tr>
-    <th>Ticker</th><th class="num">z</th><th class="num">Prior</th>
-    <th>Status</th><th class="num">Track record</th></tr></thead><tbody>` +
+  return `<div class="card scroll"><table><thead><tr>
+    <th>Ticker</th><th class="num">z</th><th class="num">Last</th><th class="num">Prior</th>
+    <th>Status</th><th class="num">Track record</th><th></th></tr></thead><tbody>` +
     list.map(i => {
-      if(i.error) return `<tr><td>${i.ticker}</td><td colspan="4" class="err">${i.error}</td></tr>`;
-      const fires = i.action !== 'none';
-      return `<tr>
-        <td>${i.ticker}</td>
+      if(i.error) return `<tr><td>${i.ticker}</td><td colspan="6" class="err">${esc(i.error)}</td></tr>`;
+      const fires = i.action !== 'none', px = mark(i.ticker);
+      return `<tr class="${fires?'hl':''}">
+        <td><a href="ticker.html?t=${i.ticker}"><strong>${i.ticker}</strong></a></td>
         <td class="num">${i.z>=0?'+':''}${i.z.toFixed(2)}</td>
-        <td class="num">${pct(i.prev_return)}</td>
+        <td class="num">${px !== null ? '$'+px.toFixed(2) : '—'}</td>
+        <td class="num ${cls(i.prev_return)}">${pct(i.prev_return)}</td>
         <td>${fires ? `<span class="pill go">${i.action} ${Math.abs(i.position).toFixed(2)}x</span>`
                     : '<span class="meta">quiet</span>'}</td>
-        <td class="num meta">${statLine(i.stats)}</td></tr>`;
+        <td class="num meta" style="font-size:12px">${statLine(i.stats)}</td>
+        <td class="num">${fires && i.tier !== 'control'
+          ? `<button class="mini" onclick="prefill('${i.ticker}')">log</button>`
+          : (fires ? '<span class="err" style="font-size:12px">do not trade</span>' : '')}</td>
+        </tr>`;
     }).join('') + '</tbody></table></div>';
 }
 
+/* ------------------------------------------------------------------ explorer */
+function renderExplorer(){
+  const tickers = DATA ? DATA.instruments.map(i => i.ticker) : FOCUS;
+  $('ex-ticks').innerHTML = tickers.map(t =>
+    `<button class="chip" aria-pressed="${t===exTicker}" onclick="setTicker('${t}')">${t}</button>`).join('');
+  $('ex-range').innerHTML = RANGES.map(([lab,n]) =>
+    `<button class="chip" aria-pressed="${n===exRange}" onclick="setRange(${n})">${lab}</button>`).join('');
+
+  const s = series(exTicker);
+  if(!s || s.close.length < 2){
+    $('ex-body').innerHTML = `<div class="emptybox">No price history published yet.<br>
+      Run the <strong>signals</strong> workflow from the Actions tab — it writes
+      <code>data/prices.json</code> alongside the signal.</div>`;
+    return;
+  }
+  const n = exRange ? Math.min(exRange, s.close.length) : s.close.length;
+  const cut = {dates:s.dates.slice(-n), open:s.open.slice(-n), close:s.close.slice(-n)};
+  const first = cut.close[0], last = cut.close[cut.close.length-1];
+  const chg = last/first - 1;
+  const rets = cut.close.map((c,i) => i ? c/cut.close[i-1]-1 : 0).slice(1);
+  const mean = rets.reduce((a,b)=>a+b,0)/(rets.length||1);
+  const sd = Math.sqrt(rets.reduce((a,b)=>a+(b-mean)**2,0)/(rets.length||1));
+
+  $('ex-body').innerHTML = `<div id="chart-host"></div>
+    <div class="exstats">
+      ${[['period','$'+first.toFixed(2)+' → $'+last.toFixed(2)],
+         ['change',`<span class="${cls(chg)}">${pct(chg)}</span>`],
+         ['high','$'+Math.max(...cut.close).toFixed(2)],
+         ['low','$'+Math.min(...cut.close).toFixed(2)],
+         ['daily vol',(sd*100).toFixed(2)+'%'],
+         ['sessions',cut.close.length]]
+        .map(([l,v]) => `<div><div class="lbl">${l}</div><div class="val">${v}</div></div>`).join('')}
+      <div><div class="lbl">detail</div>
+        <div class="val"><a href="ticker.html?t=${exTicker}">${exTicker} page →</a></div></div>
+    </div>
+    <details style="margin-top:16px"><summary>Recent sessions</summary>
+      <div class="scroll" style="margin-top:10px">${sessionTable(cut)}</div></details>`;
+
+  mountChart($('chart-host'), {
+    values: cut.close, id: 'ex',
+    axHi: '$'+Math.max(...cut.close).toFixed(2), axLo: '$'+Math.min(...cut.close).toFixed(2),
+    xFirst: cut.dates[0], xLast: cut.dates[cut.dates.length-1],
+    tip: i => {
+      const c = cut.close[i], o = cut.open[i];
+      const sess = o > 0 ? c/o - 1 : 0;
+      const prev = i > 0 ? c/cut.close[i-1] - 1 : 0;
+      return `<strong>${cut.dates[i]}</strong><br>
+        close $${c.toFixed(2)} <span class="${cls(prev)}">${pct(prev)}</span><br>
+        <span class="meta">open $${o.toFixed(2)} · session</span>
+        <span class="${cls(sess)}">${pct(sess)}</span>`;
+    }
+  });
+}
+
+function sessionTable(s){
+  const n = s.close.length, rows = [];
+  for(let i = n-1; i >= Math.max(0, n-25); i--){
+    const o = s.open[i], c = s.close[i];
+    const sess = o > 0 ? c/o - 1 : 0;
+    const ctc = i > 0 ? c/s.close[i-1] - 1 : null;
+    rows.push(`<tr><td>${s.dates[i]}</td>
+      <td class="num">$${o.toFixed(2)}</td><td class="num">$${c.toFixed(2)}</td>
+      <td class="num ${cls(sess)}">${pct(sess)}</td>
+      <td class="num ${ctc===null?'':cls(ctc)}">${ctc===null?'—':pct(ctc)}</td></tr>`);
+  }
+  return `<table><thead><tr><th>Date</th><th class="num">Open</th><th class="num">Close</th>
+    <th class="num">O→C</th><th class="num">C→C</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+function setTicker(t){ exTicker = t; renderExplorer(); }
+function setRange(n){ exRange = n; renderExplorer(); }
+
+/* ------------------------------------------------------------------ trades */
+function expectationBp(list){
+  const bps = list.map(t => {
+    const i = inst(t.ticker);
+    return i && i.stats && i.stats.avg_bp ? i.stats.avg_bp : null;
+  }).filter(v => v !== null);
+  return bps.length ? bps.reduce((a,b)=>a+b,0)/bps.length : 67.8;
+}
+
+function prefill(tk){
+  const i = inst(tk); if(!i) return;
+  const px = mark(tk) || i.price;
+  $('t-date').value = today();
+  $('t-tick').value = tk;
+  $('t-side').value = i.action === 'buy' ? 'buy' : 'short';
+  $('t-size').value = (Math.abs(i.position)*acct()/px).toFixed(2);
+  $('t-entry').value = px.toFixed(2);
+  $('t-exit').value = '';
+  $('t-entry').scrollIntoView({behavior:'smooth', block:'center'});
+  ['t-entry','t-size'].forEach(id => {
+    $(id).classList.add('flash');
+    setTimeout(() => $(id).classList.remove('flash'), 2200);
+  });
+  setTimeout(() => { $('t-entry').focus(); $('t-entry').select(); }, 320);
+}
+
+function addTrade(){
+  const d = $('t-date').value, tk = $('t-tick').value.toUpperCase().trim(),
+        sd = $('t-side').value, sz = parseFloat($('t-size').value),
+        en = parseFloat($('t-entry').value), exRaw = $('t-exit').value.trim();
+  if(!d || !tk || !en){ alert('need a date, ticker and entry price'); return; }
+  const ex = exRaw === '' ? null : parseFloat(exRaw);
+  const t = trades();
+  t.push({id:uid(), ticker:tk, side:sd, size:isFinite(sz)?sz:null, entry:en,
+          entryDate:d, exit:ex, exitDate: ex === null ? null : d});
+  saveTrades(sortTrades(t));
+  ['t-size','t-entry','t-exit'].forEach(i => $(i).value = '');
+}
+
+function renderActive(){
+  const open = trades().filter(isOpen);
+  if(!open.length){
+    $('active').innerHTML = `<div class="card"><div class="emptybox">
+      No open positions. Fire a signal, then hit <strong>Log this trade</strong> —
+      or add one below with the exit left blank.</div></div>`;
+    return;
+  }
+  let totalPL = 0, sized = 0;
+  const rows = open.map(t => {
+    const m = mark(t.ticker), r = tradeRet(t, m);
+    const pl = (r !== null && t.size) ? r*t.entry*t.size : null;
+    if(pl !== null){ totalPL += pl; sized++; }
+    return `<tr class="hl">
+      <td><a href="ticker.html?t=${esc(t.ticker)}"><strong>${esc(t.ticker)}</strong></a></td>
+      <td><span class="pill ${t.side==='short'?'short':'buy'}">${t.side}</span></td>
+      <td class="num">${t.size ?? '—'}</td>
+      <td class="num">$${Number(t.entry).toFixed(2)}</td>
+      <td class="num meta">${esc(t.entryDate||'—')}</td>
+      <td class="num">${m !== null ? '$'+m.toFixed(2) : '—'}</td>
+      <td class="num ${r===null?'':cls(r)}"><strong>${r===null?'—':pct(r)}</strong></td>
+      <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
+      <td class="num">
+        <button class="mini" onclick="closeTrade('${t.id}', ${m||0})">close</button>
+        <button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+  }).join('');
+
+  $('active').innerHTML = `<div class="card scroll"><table><thead><tr>
+    <th>Ticker</th><th>Side</th><th class="num">Size</th><th class="num">Entry</th>
+    <th class="num">Opened</th><th class="num">Mark</th><th class="num">Unreal.</th>
+    <th class="num">P&amp;L</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="note">${open.length} open${sized ? ` · unrealised
+    <strong class="${cls(totalPL)}">${usd(totalPL)}</strong>` : ' · add a share count to see dollar P&L'}.
+    Marked against the last published close (${DATA ? DATA.last_session : '—'}) —
+    not a live quote.</p></div>`;
+}
+
+function renderLog(){
+  const done = trades().filter(t => !isOpen(t));
+  if(!done.length){ $('log').innerHTML = '<p class="note">No closed trades yet.</p>'; return; }
+  const rets = done.map(t => tradeRet(t)).filter(v => v !== null);
+  const avg = rets.reduce((a,b)=>a+b,0)/(rets.length||1);
+  const wins = rets.filter(v => v > 0).length;
+  const exp = expectationBp(done);
+  let net = 0, sized = 0;
+
+  const rows = done.map(t => {
+    const r = tradeRet(t);
+    const pl = (r !== null && t.size) ? r*t.entry*t.size : null;
+    if(pl !== null){ net += pl; sized++; }
+    return `<tr>
+      <td class="meta">${esc(t.exitDate || t.entryDate || '—')}</td>
+      <td><a href="ticker.html?t=${esc(t.ticker)}"><strong>${esc(t.ticker)}</strong></a></td>
+      <td><span class="pill ${t.side==='short'?'short':'buy'}">${esc(t.side)}</span></td>
+      <td class="num">${t.size ?? '—'}</td>
+      <td class="num">$${Number(t.entry).toFixed(2)}</td>
+      <td class="num">$${Number(t.exit).toFixed(2)}</td>
+      <td class="num ${r===null?'':cls(r)}"><strong>${r===null?'—':pct(r)}</strong></td>
+      <td class="num ${pl===null?'':cls(pl)}">${pl===null?'—':usd(pl)}</td>
+      <td class="num"><button class="mini" onclick="delTrade('${t.id}')">×</button></td></tr>`;
+  }).join('');
+
+  $('log').innerHTML = `<div class="scroll"><table><thead><tr>
+    <th>Closed</th><th>Ticker</th><th>Side</th><th class="num">Size</th>
+    <th class="num">Entry</th><th class="num">Exit</th><th class="num">Return</th>
+    <th class="num">P&amp;L</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="note">${done.length} trades · realised avg
+    <strong class="${cls(avg)}">${bp(avg)}</strong>
+    vs backtest expectation <strong>+${exp.toFixed(1)}bp</strong> · hit rate
+    ${(wins/rets.length*100).toFixed(0)}%${sized ? ` · net
+    <strong class="${cls(net)}">${usd(net)}</strong>` : ''}.
+    ${avg*1e4 < exp
+      ? 'Running below expectation — a persistent shortfall means slippage the cost model missed.'
+      : 'Running at or above expectation.'}</p>`;
+}
+
+/* ------------------------------------------------------------------ render */
 function render(){
   if(!DATA) return;
   const by = t => DATA.instruments.filter(i => i.tier === t);
@@ -161,77 +398,46 @@ function render(){
     `last session ${DATA.last_session} · generated ${DATA.generated_at} · ` +
     `threshold |z| ≥ ${DATA.threshold} · cap ${DATA.cap}x`;
 
-  const gen = new Date(DATA.generated_at);
-  const hrs = (Date.now() - gen.getTime()) / 36e5;
-  $('stale').innerHTML = hrs > 36
-    ? `<div class="banner">Data is ${Math.floor(hrs/24)} days old — the workflow may not
-       have run. Do not trade from this page until it refreshes.</div>` : '';
+  const hrs = (Date.now() - new Date(DATA.generated_at).getTime())/36e5;
+  const rogue = by('control').filter(i => i.action && i.action !== 'none');
+  $('stale').innerHTML = storageWarning() +
+    (rogue.length
+      ? `<div class="banner">Control tier fired today: ${rogue.map(i=>i.ticker).join(', ')}.
+         Expected — controls trigger at the same rate as everything else. Just don't
+         trade them.</div>` : '') +
+    (hrs > 36
+      ? `<div class="banner">Data is ${Math.floor(hrs/24)} days old — the workflow may not
+         have run. Do not trade from this page until it refreshes.</div>` : '');
 
-  $('trade').innerHTML = by('tradeable').map(i => i.error
-    ? `<div class="card err">${i.ticker}: ${i.error}</div>` : heroCard(i)).join('');
+  $('t-tick').innerHTML = DATA.instruments
+    .map(i => `<option value="${i.ticker}">${i.ticker}</option>`).join('');
+  $('focus').innerHTML = FOCUS.map(focusCard).join('');
   $('watch').innerHTML = rowsTable(by('watch'));
   $('ctrl').innerHTML  = rowsTable(by('control'));
-  renderLog();
-}
-
-function trades(){ try{ return JSON.parse(localStorage.getItem('trades')||'[]'); }catch(e){ return []; } }
-function setTrades(t){ localStorage.setItem('trades', JSON.stringify(t)); renderLog(); }
-
-function addTrade(){
-  const d=$('t-date').value, tk=$('t-tick').value.toUpperCase().trim(),
-        sd=$('t-side').value.toLowerCase().trim(),
-        en=parseFloat($('t-entry').value), ex=parseFloat($('t-exit').value);
-  if(!d||!tk||!en||!ex){ alert('need date, ticker, entry and exit'); return; }
-  const raw = ex/en - 1;
-  const ret = sd.startsWith('s') ? -raw : raw;
-  const t = trades(); t.push({date:d,ticker:tk,side:sd,entry:en,exit:ex,ret:ret});
-  t.sort((a,b)=>a.date.localeCompare(b.date));
-  setTrades(t);
-  ['t-date','t-tick','t-side','t-entry','t-exit'].forEach(i=>$(i).value='');
-}
-
-function renderLog(){
-  const t = trades();
-  if(!t.length){ $('log').innerHTML = '<p class="note">No trades recorded yet.</p>'; return; }
-  const avg = t.reduce((s,x)=>s+x.ret,0)/t.length;
-  const wins = t.filter(x=>x.ret>0).length;
-  const exp = 0.00678;
-  $('log').innerHTML = `<table><thead><tr><th>Date</th><th>Ticker</th><th>Side</th>
-    <th class="num">Entry</th><th class="num">Exit</th><th class="num">Return</th><th></th></tr></thead><tbody>` +
-    t.map((x,n)=>`<tr><td>${x.date}</td><td>${x.ticker}</td><td>${x.side}</td>
-      <td class="num">${x.entry}</td><td class="num">${x.exit}</td>
-      <td class="num" style="color:${x.ret>=0?'var(--go)':'var(--bad)'}">${pct(x.ret)}</td>
-      <td class="num"><button onclick="delTrade(${n})" style="padding:2px 8px">×</button></td></tr>`).join('') +
-    `</tbody></table>
-    <p class="note">${t.length} trades · realised avg <strong>${(avg*1e4).toFixed(1)}bp</strong>
-    vs backtest expectation <strong>+${(exp*1e4).toFixed(1)}bp</strong> · hit rate
-    ${(wins/t.length*100).toFixed(0)}%. Persistent shortfall against expectation means
-    slippage the cost model missed.</p>`;
-}
-
-function delTrade(n){ const t=trades(); t.splice(n,1); setTrades(t); }
-function exportTrades(){
-  const b=new Blob([JSON.stringify(trades(),null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(b); a.download='reversal-trades.json'; a.click();
-}
-function importTrades(e){
-  const f=e.target.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{ try{ setTrades(JSON.parse(r.result)); }catch(err){ alert('bad file'); } };
-  r.readAsText(f);
+  renderExplorer(); renderActive(); renderLog();
 }
 
 $('acct').value = acct();
-fetch('data/signals.json?t=' + Date.now())
-  .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(d => { DATA = d; render(); })
+$('t-date').value = today();
+
+Promise.all([getJSON('data/signals.json', true), getJSON('data/prices.json')])
+  .then(([sig, px]) => {
+    DATA = sig; PRICES = px;
+    if(!PRICES) console.warn('prices.json not published yet — charts disabled');
+    render();
+  })
   .catch(err => {
     $('stamp').textContent = '';
     $('stale').innerHTML = `<div class="banner">Could not load data/signals.json (${err}).
       The workflow may not have run yet — trigger it from the Actions tab.</div>`;
-    renderLog();
+    renderActive(); renderLog();
   });
+
+let rt;
+addEventListener('resize', () => {
+  clearTimeout(rt);
+  rt = setTimeout(() => { if(PRICES) renderExplorer(); }, 200);
+});
 </script>
 </body>
 </html>
