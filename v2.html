@@ -148,7 +148,26 @@ function posCard(i){
   </div>`;
 }
 
+/* generated_at must be a real UTC timestamp. Anything else -- "SMOKE", a
+   placeholder, a hand-edited payload -- did not come out of signals_v2.py.
+   This page renders share counts, so rendering an unverified payload puts a
+   tradeable-looking number on screen with nothing behind it. That is the same
+   failure the unsettled-bar guard exists to prevent, one step earlier in the
+   chain: there the bar was real but unfinished, here the file may not be
+   engine output at all. Refusing is the only safe default, because a fixture
+   looks exactly like real data once it is rendered. */
+const REAL_STAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+
 getJSON('data/v2/signals.json', false).then(d => {
+  if(d && !REAL_STAMP.test(String(d.generated_at || ''))){
+    $('stamp').textContent = '';
+    $('warnbox').innerHTML = `<div class="banner"><strong>Not rendering
+      <code>data/v2/signals.json</code>.</strong> Its <code>generated_at</code> is
+      <code>${esc(d.generated_at)}</code>, which is not a UTC timestamp, so this file
+      did not come from <strong>engine/signals_v2.py</strong>. No positions are shown.
+      The research tables below are static and still valid.</div>`;
+    return;
+  }
   if(!d){
     $('stamp').textContent = '';
     $('warnbox').innerHTML = `<div class="banner">No <code>data/v2/signals.json</code> yet.

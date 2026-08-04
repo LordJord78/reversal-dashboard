@@ -31,7 +31,19 @@ computes and what the research note claims that the code attributes to the wrong
 
 ## Findings
 
-### 1. `sess` and `rows` can silently fall out of alignment — HIGH (latent)
+### 1. `sess` and `rows` can silently fall out of alignment — HIGH (latent) — **RESOLVED**
+
+**Resolved:** both engines now filter `rows` first and derive `sess` from the
+filtered list, exactly as prescribed below. `replay`'s second `o <= 0` check
+went with it — redundant once the list is clean, and capable of skipping a
+trade the statistics still counted on being there.
+
+Regression-tested rather than asserted: `TestRowAlignment` inserts a zero-open
+bar into a known-good series and requires the trade list to come back
+byte-identical, since the bad bar is filtered away again. Run against the
+pre-fix engine that test fails, along with the `signals.py` price case — so it
+is testing the bug, not the fix. Still zero effect on published output; no ETF
+bar in the current history has `open <= 0`.
 
 ```python
 sess = [(d, c / o - 1) for d, o, c in rows if o > 0]   # filtered
@@ -135,7 +147,13 @@ and, for the purpose of establishing this edge, it is not.
 
 ---
 
-### 5. `max_drawdown` measures from the first trade, not from initial capital — LOW
+### 5. `max_drawdown` measures from the first trade, not from initial capital — LOW — **RESOLVED**
+
+**Resolved:** `peak` now starts at 1.0. Re-measured against the committed trade
+lists, the published figure is unchanged on all six tickers, exactly as
+predicted below — QQQ −0.2346, XLK −0.2221, DIA −0.2929, SPY −0.2055, TLT
+−0.4531, GLD −0.5279. Nothing to republish; the fix only closes the case where
+a first trade is also the worst stretch. Covered by `TestMaxDrawdown`.
 
 ```python
 peak, worst = curve[0], 0.0
@@ -197,11 +215,18 @@ noted only so it is not mistaken for an error later.
 
 ## Recommended order
 
-1. Write `test_backtest.py` — assert `signals.py` and `backtest.py` agree on the most recent
+1. ~~Write `test_backtest.py` — assert `signals.py` and `backtest.py` agree on the most recent
    common session. It is named in the docstring, and it is the test that catches this class
-   of failure. **(#3)**
-2. Fix the `sess`/`rows` alignment in both engines. Small, silent, and unbounded. **(#1)**
-3. Resolve the note-vs-engine discrepancy, starting with XLK. The tiering depends on it. **(#2)**
-4. Add concentration to the README's honesty section. **(#4)**
-5. Initialise `max_drawdown` peak at 1.0; raise `SLIPPAGE_BP` to something defensible and
-   republish. **(#5, #6)**
+   of failure.~~ **(#3) — done**, 22 tests, wired into the workflow ahead of anything that
+   writes to `data/`.
+2. ~~Fix the `sess`/`rows` alignment in both engines. Small, silent, and unbounded.~~
+   **(#1) — done**, with a regression test that fails against the pre-fix engine.
+3. **Resolve the note-vs-engine discrepancy, starting with XLK. The tiering depends on it. (#2)
+   — still open, and now the largest thing on this list.** The dashboard prints the note's
+   `SR 0.31` beside an engine that measures the same instrument at 0.705. Costs are excluded
+   as the cause. Nothing fixed so far touches it.
+4. Add concentration to the README's honesty section. **(#4) — still open.**
+5. ~~Initialise `max_drawdown` peak at 1.0; raise `SLIPPAGE_BP` to something defensible and
+   republish.~~ **(#5, #6) — done.** `max_drawdown` changed no published figure;
+   `SLIPPAGE_BP` is charged per print and costs 0.4bp a trade, which moved QQQ SR 0.716 →
+   0.713. `data/backtest/*.json` still carries the old numbers until the workflow reruns.

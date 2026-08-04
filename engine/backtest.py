@@ -53,8 +53,17 @@ def cost_bp(spread_bp, position):
 
 # ---------------------------------------------------------------- replay
 def replay(rows, spread_bp):
-    """rows: sorted [(date, open, close)]. Returns the full trade list."""
-    sess = [(d, c / o - 1) for d, o, c in rows if o > 0]
+    """rows: sorted [(date, open, close)]. Returns the full trade list.
+
+    rows is filtered BEFORE sess is derived from it, so a single index means
+    the same session in both. The previous version filtered sess by o > 0 and
+    then subscripted the unfiltered rows with a sess index: drop one bad bar
+    and every trade after it is booked against the wrong session's open and
+    close, silently, with output that still looks plausible. Depending on
+    which way the shift lands it can also become look-ahead.
+    """
+    rows = [r for r in rows if r[1] > 0]
+    sess = [(d, c / o - 1) for d, o, c in rows]
     if len(sess) < S.VOL_WINDOW + 3:
         return []
 
@@ -70,9 +79,10 @@ def replay(rows, spread_bp):
             continue
         pos = max(-S.CAP, min(S.CAP, -z))
 
+        # rows is already filtered, so this index is the same session sess[i+1]
+        # describes -- no second o <= 0 check needed, and none that could
+        # silently skip a trade the statistics still expect to be there.
         d, o, c = rows[i + 1]
-        if o <= 0:
-            continue
         gross = pos * (c / o - 1)
         net = gross - cost_bp(spread_bp, pos) / 1e4
         trades.append({
@@ -89,7 +99,14 @@ def replay(rows, spread_bp):
 
 # ---------------------------------------------------------------- stats
 def max_drawdown(curve):
-    peak, worst = curve[0], 0.0
+    """Peak starts at initial capital, not at equity after the first trade.
+
+    Seeding peak with curve[0] hides the drawdown from 1.0 into a losing first
+    trade -- the money is gone either way, but the number said it never fell.
+    Dormant on the current history, where no ticker's first trade is also its
+    worst stretch, and wrong the moment one is.
+    """
+    peak, worst = 1.0, 0.0
     for v in curve:
         peak = max(peak, v)
         worst = min(worst, v / peak - 1)

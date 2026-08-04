@@ -171,7 +171,12 @@ def load_all(tickers, period="2y", limit=HISTORY_SESSIONS + 40):
 
 # ---------------------------------------------------------------- signal
 def compute(rows):
-    sess = [(d, c / o - 1) for d, o, c in rows if o > 0]
+    # Filter first, then derive -- so rows[-1] and sess[-1] are the same
+    # session. Filtering sess alone and then reading rows[-1][2] for price
+    # meant a trailing bad bar published a price from one session and a z
+    # from another, with nothing to show the two disagreed.
+    rows = [r for r in rows if r[1] > 0]
+    sess = [(d, c / o - 1) for d, o, c in rows]
     if len(sess) < VOL_WINDOW + 2:
         return None
     prev_date, prev_ret = sess[-1]

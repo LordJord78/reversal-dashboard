@@ -164,5 +164,78 @@ class TestSharpe(unittest.TestCase):
         self.assertIsNone(B.sharpe([], n_sessions=400))
 
 
+class TestRowAlignment(unittest.TestCase):
+    """Audit finding 1: a filtered sess indexed against unfiltered rows.
+
+    A bar with open <= 0 is dropped from sess but not from rows, so every
+    index after it points at a different session. Nothing raises and the
+    output stays plausible -- the trade is simply booked against the wrong
+    day's open and close.
+
+    A bad bar is INSERTED into a known-good series here. Once filtered it is
+    gone again, so the two runs must produce byte-identical trades. Anything
+    else is the misalignment.
+    """
+
+    def test_a_zero_open_bar_does_not_shift_later_trades(self):
+        clean = synthetic(shock_at=200)
+        bad = clean[:10] + [("2020-01-11", 0.0, 0.0)] + clean[10:]
+
+        t_clean = B.replay(clean, spread_bp=0.14)
+        t_bad = B.replay(bad, spread_bp=0.14)
+
+        self.assertTrue(t_clean)
+        self.assertEqual([(t["sd"], t["d"]) for t in t_clean],
+                         [(t["sd"], t["d"]) for t in t_bad])
+        self.assertEqual(t_clean, t_bad)
+
+    def test_entry_and_exit_come_from_the_session_that_was_traded(self):
+        rows = synthetic(shock_at=200)
+        by_date = {d: (o, c) for d, o, c in rows}
+        for t in B.replay(rows, spread_bp=0.14):
+            o, c = by_date[t["d"]]
+            self.assertAlmostEqual(t["o"], round(o, 2), places=2)
+            self.assertAlmostEqual(t["c"], round(c, 2), places=2)
+
+    def test_signal_session_is_the_one_before_the_traded_session(self):
+        rows = synthetic(shock_at=200)
+        order = [d for d, _, _ in rows]
+        for t in B.replay(rows, spread_bp=0.14):
+            self.assertEqual(order.index(t["d"]), order.index(t["sd"]) + 1)
+
+    def test_compute_price_matches_the_session_it_scored(self):
+        """signals.py had the same pattern: price read from unfiltered rows."""
+        rows = synthetic(n=200)
+        good_close = rows[-1][2]
+        sig = S.compute(rows + [("2020-12-31", 0.0, 0.0)])
+        self.assertEqual(sig["prev_session"], rows[-1][0])
+        self.assertAlmostEqual(sig["price"], round(good_close, 2), places=2)
+
+
+class TestMaxDrawdown(unittest.TestCase):
+    """Audit finding 5: peak seeded from equity after the first trade."""
+
+    def test_drawdown_into_a_losing_first_trade_is_counted(self):
+        # Equity never recovers above 1.0, so measuring from curve[0] would
+        # report no drawdown at all.
+        self.assertAlmostEqual(B.max_drawdown([0.9, 0.95, 0.92]), -0.10,
+                               places=6)
+
+    def test_a_winning_start_is_unaffected(self):
+        self.assertAlmostEqual(B.max_drawdown([1.10, 1.21, 1.089]), -0.10,
+                               places=6)
+
+    def test_monotonic_gains_have_no_drawdown(self):
+        self.assertEqual(B.max_drawdown([1.05, 1.10, 1.20]), 0.0)
+
+    def test_never_positive(self):
+        trades = B.replay(synthetic(shock_at=380), spread_bp=0.14)
+        eq, v = [], 1.0
+        for t in trades:
+            v *= (1 + t["n"])
+            eq.append(v)
+        self.assertLessEqual(B.max_drawdown(eq), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
