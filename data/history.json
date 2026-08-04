@@ -40,18 +40,18 @@
   {
     "session": "2026-08-04",
     "z": {
-      "QQQ": 0.629,
-      "XLK": 3.77,
-      "DIA": 2.614,
-      "SPY": 2.809,
-      "TLT": 0.06,
-      "GLD": 1.548
+      "QQQ": 1.427,
+      "XLK": 1.252,
+      "DIA": 0.682,
+      "SPY": 1.706,
+      "TLT": 0.254,
+      "GLD": 0.229
     },
     "action": {
       "QQQ": "none",
-      "XLK": "short",
-      "DIA": "short",
-      "SPY": "short",
+      "XLK": "none",
+      "DIA": "none",
+      "SPY": "none",
       "TLT": "none",
       "GLD": "none"
     }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T13:42:00Z",
+  "generated_at": "2026-08-04T16:09:52Z",
   "last_session": "2026-08-04",
   "threshold": 2.0,
   "cap": 2.0,
@@ -17,12 +17,12 @@
         "worst_trade": -15.5
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.006714,
+      "prev_return": 0.015229,
       "vol": 0.010674,
-      "z": 0.629,
+      "z": 1.427,
       "action": "none",
       "position": 0.0,
-      "price": 712.96,
+      "price": 718.99,
       "trigger_up": 0.021347,
       "trigger_dn": -0.021347
     },
@@ -39,12 +39,12 @@
         "worst_trade": null
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.056261,
+      "prev_return": 0.018683,
       "vol": 0.014925,
-      "z": 3.77,
-      "action": "short",
-      "position": -2.0,
-      "price": 183.8,
+      "z": 1.252,
+      "action": "none",
+      "position": 0.0,
+      "price": 185.93,
       "trigger_up": 0.029851,
       "trigger_dn": -0.029851
     },
@@ -61,12 +61,12 @@
         "worst_trade": null
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.014427,
+      "prev_return": 0.003765,
       "vol": 0.005519,
-      "z": 2.614,
-      "action": "short",
-      "position": -2.0,
-      "price": 537.19,
+      "z": 0.682,
+      "action": "none",
+      "position": 0.0,
+      "price": 539.92,
       "trigger_up": 0.011037,
       "trigger_dn": -0.011037
     },
@@ -83,12 +83,12 @@
         "worst_trade": null
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.01684,
+      "prev_return": 0.010228,
       "vol": 0.005995,
-      "z": 2.809,
-      "action": "short",
-      "position": -2.0,
-      "price": 762.06,
+      "z": 1.706,
+      "action": "none",
+      "position": 0.0,
+      "price": 768.41,
       "trigger_up": 0.011989,
       "trigger_dn": -0.011989
     },
@@ -105,12 +105,12 @@
         "worst_trade": null
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.000242,
+      "prev_return": 0.001029,
       "vol": 0.004049,
-      "z": 0.06,
+      "z": 0.254,
       "action": "none",
       "position": 0.0,
-      "price": 82.67,
+      "price": 82.73,
       "trigger_up": 0.008099,
       "trigger_dn": -0.008099
     },
@@ -127,12 +127,12 @@
         "worst_trade": null
       },
       "prev_session": "2026-08-04",
-      "prev_return": 0.01355,
+      "prev_return": 0.002005,
       "vol": 0.008754,
-      "z": 1.548,
+      "z": 0.229,
       "action": "none",
       "position": 0.0,
-      "price": 375.11,
+      "price": 374.89,
       "trigger_up": 0.017508,
       "trigger_dn": -0.017508
     }
