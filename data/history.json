@@ -36,5 +36,24 @@
       "TLT": "none",
       "GLD": "none"
     }
+  },
+  {
+    "session": "2026-08-04",
+    "z": {
+      "QQQ": 0.629,
+      "XLK": 3.77,
+      "DIA": 2.614,
+      "SPY": 2.809,
+      "TLT": 0.06,
+      "GLD": 1.548
+    },
+    "action": {
+      "QQQ": "none",
+      "XLK": "short",
+      "DIA": "short",
+      "SPY": "short",
+      "TLT": "none",
+      "GLD": "none"
+    }
   }
 ]

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-08-03T19:22:12Z",
-  "last_session": "2026-08-03",
+  "generated_at": "2026-08-04T13:42:00Z",
+  "last_session": "2026-08-04",
   "threshold": 2.0,
   "cap": 2.0,
   "instruments": [
@@ -16,15 +16,15 @@
         "spread_bp": 0.14,
         "worst_trade": -15.5
       },
-      "prev_session": "2026-08-03",
-      "prev_return": 0.017811,
-      "vol": 0.010543,
-      "z": 1.689,
+      "prev_session": "2026-08-04",
+      "prev_return": 0.006714,
+      "vol": 0.010674,
+      "z": 0.629,
       "action": "none",
       "position": 0.0,
-      "price": 700.6,
-      "trigger_up": 0.021087,
-      "trigger_dn": -0.021087
+      "price": 712.96,
+      "trigger_up": 0.021347,
+      "trigger_dn": -0.021347
     },
     {
       "ticker": "XLK",
@@ -38,15 +38,15 @@
         "spread_bp": 0.56,
         "worst_trade": null
       },
-      "prev_session": "2026-08-03",
-      "prev_return": 0.025803,
-      "vol": 0.014712,
-      "z": 1.754,
-      "action": "none",
-      "position": 0.0,
-      "price": 178.5,
-      "trigger_up": 0.029425,
-      "trigger_dn": -0.029425
+      "prev_session": "2026-08-04",
+      "prev_return": 0.056261,
+      "vol": 0.014925,
+      "z": 3.77,
+      "action": "short",
+      "position": -2.0,
+      "price": 183.8,
+      "trigger_up": 0.029851,
+      "trigger_dn": -0.029851
     },
     {
       "ticker": "DIA",
@@ -60,15 +60,15 @@
         "spread_bp": 0.19,
         "worst_trade": null
       },
-      "prev_session": "2026-08-03",
-      "prev_return": 0.002965,
-      "vol": 0.00553,
-      "z": 0.536,
-      "action": "none",
-      "position": 0.0,
-      "price": 531.12,
-      "trigger_up": 0.011061,
-      "trigger_dn": -0.011061
+      "prev_session": "2026-08-04",
+      "prev_return": 0.014427,
+      "vol": 0.005519,
+      "z": 2.614,
+      "action": "short",
+      "position": -2.0,
+      "price": 537.19,
+      "trigger_up": 0.011037,
+      "trigger_dn": -0.011037
     },
     {
       "ticker": "SPY",
@@ -82,15 +82,15 @@
         "spread_bp": 0.13,
         "worst_trade": null
       },
-      "prev_session": "2026-08-03",
-      "prev_return": 0.011936,
-      "vol": 0.00591,
-      "z": 2.02,
+      "prev_session": "2026-08-04",
+      "prev_return": 0.01684,
+      "vol": 0.005995,
+      "z": 2.809,
       "action": "short",
       "position": -2.0,
-      "price": 758.39,
-      "trigger_up": 0.011819,
-      "trigger_dn": -0.011819
+      "price": 762.06,
+      "trigger_up": 0.011989,
+      "trigger_dn": -0.011989
     },
     {
       "ticker": "TLT",
@@ -104,15 +104,15 @@
         "spread_bp": null,
         "worst_trade": null
       },
-      "prev_session": "2026-08-03",
-      "prev_return": -0.000365,
-      "vol": 0.00405,
-      "z": -0.09,
+      "prev_session": "2026-08-04",
+      "prev_return": 0.000242,
+      "vol": 0.004049,
+      "z": 0.06,
       "action": "none",
       "position": 0.0,
-      "price": 82.22,
-      "trigger_up": 0.008101,
-      "trigger_dn": -0.008101
+      "price": 82.67,
+      "trigger_up": 0.008099,
+      "trigger_dn": -0.008099
     },
     {
       "ticker": "GLD",
@@ -126,15 +126,15 @@
         "spread_bp": null,
         "worst_trade": null
       },
-      "prev_session": "2026-08-03",
-      "prev_return": 0.00408,
-      "vol": 0.008737,
-      "z": 0.467,
+      "prev_session": "2026-08-04",
+      "prev_return": 0.01355,
+      "vol": 0.008754,
+      "z": 1.548,
       "action": "none",
       "position": 0.0,
-      "price": 371.61,
-      "trigger_up": 0.017475,
-      "trigger_dn": -0.017475
+      "price": 375.11,
+      "trigger_up": 0.017508,
+      "trigger_dn": -0.017508
     }
   ]
 }
