@@ -23,6 +23,9 @@ jobs:
       - name: install deps
         run: pip install yfinance
 
+      - name: compute signals
+        run: python engine/signals.py
+
       - name: rebuild backtest + alerts
         run: python engine/backtest.py
 
