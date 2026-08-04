@@ -17,43 +17,5 @@
       "TLT": "none",
       "GLD": "none"
     }
-  },
-  {
-    "session": "2026-08-03",
-    "z": {
-      "QQQ": 1.689,
-      "XLK": 1.754,
-      "DIA": 0.536,
-      "SPY": 2.02,
-      "TLT": -0.09,
-      "GLD": 0.467
-    },
-    "action": {
-      "QQQ": "none",
-      "XLK": "none",
-      "DIA": "none",
-      "SPY": "short",
-      "TLT": "none",
-      "GLD": "none"
-    }
-  },
-  {
-    "session": "2026-08-04",
-    "z": {
-      "QQQ": 1.427,
-      "XLK": 1.252,
-      "DIA": 0.682,
-      "SPY": 1.706,
-      "TLT": 0.254,
-      "GLD": 0.229
-    },
-    "action": {
-      "QQQ": "none",
-      "XLK": "none",
-      "DIA": "none",
-      "SPY": "none",
-      "TLT": "none",
-      "GLD": "none"
-    }
   }
 ]

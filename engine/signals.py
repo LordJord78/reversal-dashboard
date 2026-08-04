@@ -23,7 +23,7 @@ disagree, which a second live feed could not guarantee.
 """
 
 import json, os, statistics, sys, urllib.request, io, csv
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 VOL_WINDOW = 60
 THRESHOLD  = 2.0
@@ -111,13 +111,62 @@ def from_stooq(tickers, limit=None):
     return out
 
 
+# A session dated D is settled only after its close. US equity closes land at
+# 20:00 UTC (EDT) or 21:00 UTC (EST); we wait for the later of the two so this
+# needs no timezone database. zoneinfo has no data on Windows unless tzdata is
+# installed, and the guard has to behave identically on a laptop and on the
+# Actions runner -- a guard that silently no-ops on one of them is worse than
+# no guard, because it looks like it is working.
+SESSION_CLOSE_UTC_HOUR = 21
+
+
+def drop_incomplete(rows, now=None):
+    """Drop trailing bars whose session has not closed yet.
+
+    yfinance returns today's in-progress bar during market hours with Close
+    set to the last trade rather than the settlement price. Scoring it treats
+    a partial open->current move as a completed session.
+
+    This is not hypothetical. On 2026-08-04 the scheduled run slipped 101
+    minutes and landed 11 minutes after the open; the partial bar produced
+    phantom 2-sigma fires on SPY, XLK and DIA simultaneously, all of which
+    evaporated as the session went on. The rule is open-to-close on a
+    COMPLETED session -- anything else is a different strategy wearing its
+    name.
+
+    Trailing bars are popped in a loop rather than checked once: a stale feed
+    can hand back more than one unsettled row.
+    """
+    now = now or datetime.now(timezone.utc)
+    out = list(rows)
+    while out:
+        d = datetime.strptime(out[-1][0], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        if now >= d + timedelta(hours=SESSION_CLOSE_UTC_HOUR):
+            break
+        out.pop()
+    return out
+
+
 def load_all(tickers, period="2y", limit=HISTORY_SESSIONS + 40):
     data = from_yfinance(tickers, period=period)
     missing = [t for t in tickers if t not in data]
     if missing:
         print(f"falling back to stooq for {missing}", file=sys.stderr)
         data.update(from_stooq(missing, limit=limit))
-    return data
+
+    # Guard here rather than in compute() so every consumer inherits it --
+    # signals.py, prices.json and backtest.py all read through this function,
+    # and the published chart must never show a bar the signal did not score.
+    cleaned = {}
+    for tk, rows in data.items():
+        kept = drop_incomplete(rows)
+        if len(kept) != len(rows):
+            print(f"{tk}: dropped {len(rows) - len(kept)} unsettled bar(s); "
+                  f"last settled session {kept[-1][0] if kept else 'none'}",
+                  file=sys.stderr)
+        if kept:
+            cleaned[tk] = kept
+    return cleaned
 
 
 # ---------------------------------------------------------------- signal

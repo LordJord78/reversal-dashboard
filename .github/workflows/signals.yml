@@ -2,9 +2,17 @@ name: signals
 
 on:
   schedule:
-    # 12:00 UTC on weekdays = 8am ET / 5am PT, well before the 9:30 ET open.
-    # GitHub cron is always UTC and does not follow daylight saving.
-    - cron: "0 12 * * 1-5"
+    # 10:00 UTC on weekdays = 6am ET / 3am PT. GitHub cron is always UTC and
+    # does not follow daylight saving.
+    #
+    # This used to be 12:00 UTC, described as "well before the 9:30 ET open".
+    # It was 90 minutes before. Scheduled runs are queued at low priority and
+    # slip routinely: on 2026-08-04 this one ran 101 minutes late, landing
+    # after the open, and scored a partial bar. drop_incomplete() in
+    # signals.py is the actual fix -- it makes a late run produce yesterday's
+    # correct signal instead of today's fictional one. This earlier slot just
+    # means the run is usually on time as well as always correct.
+    - cron: "0 10 * * 1-5"
   workflow_dispatch:
 
 permissions:
