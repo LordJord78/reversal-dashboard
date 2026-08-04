@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>v2 graded — session reversal</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./"><span class="mark"></span><span>Session reversal</span></a>
+    <nav class="nav">
+      <a class="navlink" href="./">Signals</a>
+      <a class="navlink" href="alerts.html">Trade alerts</a>
+      <a class="navlink" href="v2.html" aria-current="page">v2 graded</a>
+      <span class="navsep"></span>
+      <a class="navlink" href="ticker.html?t=QQQ">QQQ</a>
+      <a class="navlink" href="ticker.html?t=SPY">SPY</a>
+      <a class="navlink" href="ticker.html?t=XLK">XLK</a>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+  <h1>v2 &mdash; the graded reversal</h1>
+  <p class="sub" id="stamp">loading&hellip;</p>
+
+  <div id="warnbox"></div>
+
+  <div class="card explain">
+    <p style="margin:0 0 10px"><strong>Research, not the traded strategy.</strong>
+    v1 asks a yes/no question: did the prior session move at least 2 standard
+    deviations? If yes, take the opposite side at 2x; if no, do nothing. That fires
+    about 16 times a year. v2 asks <em>how much</em> — position is
+    <code>&minus;z &times; 0.25</code> every session, capped at 2x, with no threshold
+    at all. A z of 1.9 is not discarded, just held smaller than a z of 2.4.</p>
+    <p class="note" style="margin:0">Same instruments, same open&rarr;close execution,
+    same no-overnight rule. The only change is that the gate becomes a dial. Positions
+    below 0.02x are rounded away as too small to be worth an order.</p>
+  </div>
+
+  <div class="card" style="border-color:var(--vio)">
+    <p style="margin:0 0 10px"><strong>The verdict, up front: v2 trades 15&times; more
+    often and does not make more money.</strong></p>
+    <p class="note" style="margin:0">It wins on Sharpe only below roughly
+    <strong>1bp of slippage</strong>. Above that v1 wins and the gap widens fast,
+    because v2 pays execution 251 times a year for an edge 33&times; smaller per trade.
+    The lower drawdown is a <em>position-sizing</em> effect, not a structural one —
+    scaled to v1's risk, its worst day is identical. Full working in
+    <code>RESEARCH_V2.md</code>.</p>
+  </div>
+
+  <h2>Today&rsquo;s graded positions</h2>
+  <p class="note" id="posnote" style="margin:-6px 0 14px">
+    What v2 would hold today, beside what v1 says on the same data.</p>
+  <div class="grid3" id="focus"></div>
+  <div class="scroll"><table class="tall" id="table"></table></div>
+
+  <h2>Why the threshold exists</h2>
+  <div class="card explain">
+    <p style="margin:0 0 10px">The most useful thing this study produced is a fact
+    about v1, not v2: <strong>the |z| &ge; 2 threshold is a cost filter, not a signal
+    filter.</strong> Sub-threshold sessions carry real predictive content — that is
+    why v2 works at all before costs. What the threshold does is concentrate trading
+    into the sessions where the expected move is large enough to pay for crossing
+    the spread.</p>
+    <p class="note" style="margin:0">So v1's sparseness isn't the strategy being picky
+    about signal quality. It's the strategy refusing to trade when the prize is
+    smaller than the toll.</p>
+  </div>
+
+  <h2>Net Sharpe by slippage assumption &mdash; QQQ, 27 years</h2>
+  <div class="scroll"><table class="tall" id="costs"></table></div>
+  <p class="note" style="margin:10px 0 0">The engine ships assuming 0.2bp. The audit
+  flagged that as optimistic for market-on-open and market-on-close fills; this table
+  is where that assumption stops being academic and starts choosing the strategy.</p>
+
+  <h2>Walk-forward</h2>
+  <div class="scroll"><table class="tall" id="wf"></table></div>
+  <p class="note" style="margin:10px 0 0">Two independent halves, no reoptimisation.
+  Both survive, so the structure is real — it is only the cost arithmetic that sinks
+  it. The v2 portfolio was the most stable thing tested.</p>
+
+  <h2>How to settle it</h2>
+  <div class="card explain">
+    <p style="margin:0 0 10px">One measurement decides this, and you are already
+    instrumented to take it. Log real fills on the
+    <a href="./">signals page</a>. Entry is meant to be the session open and exit the
+    close &mdash; the gap between those and what you actually got is your slippage.</p>
+    <p class="note" style="margin:0">
+    <strong>Under 1bp</strong> &rarr; v2 is genuinely better: same Sharpe, a third of
+    the drawdown, something to do most days instead of fourteen times a year.<br>
+    <strong>Over 1bp</strong> &rarr; v1 is better and this page stays research.</p>
+  </div>
+
+  <p class="note" style="margin:26px 0 0">Not investment advice. A research tool for
+  one person's own account, computed from a backtest that may not describe the future.</p>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const COSTS = [
+  {slip:'0.2bp  (shipped)', v1:0.758, v2:0.774},
+  {slip:'1bp',              v1:0.744, v2:0.722},
+  {slip:'2bp',              v1:0.725, v2:0.657},
+  {slip:'3bp',              v1:0.707, v2:0.593},
+  {slip:'5bp',              v1:0.670, v2:0.463},
+  {slip:'8bp',              v1:0.614, v2:0.268},
+  {slip:'12bp',             v1:0.539, v2:0.006},
+  {slip:'breakeven',        v1:'40.2bp', v2:'12.1bp', foot:true}
+];
+const WF = [
+  {name:'v1  QQQ  z&ge;2, vw 60',            a:0.667, b:0.925},
+  {name:'v2  QQQ  &minus;z&times;0.25',      a:0.695, b:0.898},
+  {name:'v1  portfolio of 4',                a:0.765, b:0.798},
+  {name:'v2  portfolio &minus;z&times;0.5',  a:0.840, b:0.817}
+];
+
+function posCard(i){
+  const p = i.position, live = p !== 0;
+  const side = p < 0 ? 'SHORT' : p > 0 ? 'BUY' : 'flat';
+  const shares = live ? Math.abs(p) * acct() / i.price : 0;
+  const v1live = i.v1_action && i.v1_action !== 'none';
+  return `<div class="fcard">
+    <div class="fhead">
+      <span class="tick">${esc(i.ticker)}</span>
+      <span class="tier ${esc(i.tier)}">${esc(i.tier)}</span>
+      <span class="pill ${live ? (p<0?'down':'up') : ''}">${live ? side+' '+Math.abs(p).toFixed(2)+'x' : 'flat'}</span>
+    </div>
+    <div class="px">${usd(i.price)}</div>
+    <div class="chg ${cls(i.prev_return)}">${pct(i.prev_return)} prior session O&rarr;C</div>
+    <div class="frow"><span class="lbl">Z SCORE</span>
+      <span class="val zv ${cls(-i.z)}">${i.z>=0?'+':''}${i.z.toFixed(2)}</span></div>
+    <div class="frow"><span class="lbl">V2 SIZE</span>
+      <span class="val">${live ? shares.toFixed(1)+' sh' : '&mdash;'}</span></div>
+    <div class="frow"><span class="lbl">V1 SAYS</span>
+      <span class="val">${v1live ? esc(i.v1_action)+' '+Math.abs(i.v1_position).toFixed(2)+'x' : 'no trade'}</span></div>
+    ${zMeter(i.z, 2)}
+    <div class="stat">v2 holds every session · v1 needs |z| &ge; 2</div>
+  </div>`;
+}
+
+getJSON('data/v2/signals.json', false).then(d => {
+  if(!d){
+    $('stamp').textContent = '';
+    $('warnbox').innerHTML = `<div class="banner">No <code>data/v2/signals.json</code> yet.
+      It is written by <strong>engine/signals_v2.py</strong>, which runs in the signals
+      workflow alongside v1. The research tables below are static and still valid.</div>`;
+  } else {
+    const p = d.params;
+    $('stamp').textContent =
+      `last session ${d.last_session} · generated ${d.generated_at} · ` +
+      `position = −z × ${p.sizer} · cap ${p.cap}x · vol window ${p.vol_window}`;
+    const ok = d.instruments.filter(i => !i.error);
+    $('focus').innerHTML = ok.filter(i => FOCUS.includes(i.ticker)).map(posCard).join('');
+    const rest = ok.filter(i => !FOCUS.includes(i.ticker));
+    if(rest.length){
+      $('table').innerHTML =
+        `<thead><tr><th>TICKER</th><th>TIER</th><th class="num">Z</th>
+          <th class="num">V2 POSITION</th><th class="num">V1</th><th class="num">LAST</th></tr></thead>
+         <tbody>` + rest.map(i => `<tr>
+            <td><strong>${esc(i.ticker)}</strong></td>
+            <td><span class="tier ${esc(i.tier)}">${esc(i.tier)}</span></td>
+            <td class="num ${cls(-i.z)}">${i.z>=0?'+':''}${i.z.toFixed(2)}</td>
+            <td class="num">${i.position ? (i.position<0?'short ':'buy ')+Math.abs(i.position).toFixed(2)+'x' : 'flat'}</td>
+            <td class="num">${i.v1_action && i.v1_action!=='none' ? esc(i.v1_action)+' '+Math.abs(i.v1_position).toFixed(2)+'x' : '—'}</td>
+            <td class="num">${usd(i.price)}</td></tr>`).join('') + `</tbody>`;
+      $('posnote').insertAdjacentHTML('beforeend',
+        ' Controls (TLT, GLD) are shown for completeness and must never be traded.');
+    }
+  }
+
+  $('costs').innerHTML =
+    `<thead><tr><th>SLIPPAGE</th><th class="num">v1 &mdash; threshold</th>
+      <th class="num">v2 &mdash; graded</th><th>winner</th></tr></thead><tbody>` +
+    COSTS.map(r => {
+      if(r.foot) return `<tr><td><strong>breakeven</strong></td>
+        <td class="num"><strong>${r.v1}</strong></td><td class="num">${r.v2}</td>
+        <td class="note">slippage at which SR reaches zero</td></tr>`;
+      const w = r.v2 > r.v1 ? 'v2' : 'v1';
+      return `<tr><td>${r.slip}</td>
+        <td class="num ${w==='v1'?'up':''}">${r.v1.toFixed(3)}</td>
+        <td class="num ${w==='v2'?'up':''}">${r.v2.toFixed(3)}</td>
+        <td>${w}</td></tr>`;
+    }).join('') + `</tbody>`;
+
+  $('wf').innerHTML =
+    `<thead><tr><th>VARIANT</th><th class="num">1999&ndash;2013</th>
+      <th class="num">2013&ndash;2026</th></tr></thead><tbody>` +
+    WF.map(r => `<tr><td>${r.name}</td>
+      <td class="num">${r.a.toFixed(3)}</td><td class="num">${r.b.toFixed(3)}</td></tr>`).join('') +
+    `</tbody>`;
+}).catch(err => {
+  $('stamp').textContent = '';
+  $('warnbox').innerHTML = `<div class="banner">Could not load v2 data (${err}).</div>`;
+});
+</script>
+</body>
+</html>

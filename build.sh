@@ -25,7 +25,7 @@ rm -rf _site
 mkdir -p _site
 
 # pages
-cp index.html ticker.html alerts.html _site/
+cp index.html ticker.html alerts.html v2.html _site/
 
 # shared css + js
 cp -r assets _site/

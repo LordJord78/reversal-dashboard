@@ -37,6 +37,13 @@ jobs:
       - name: rebuild backtest + alerts
         run: python engine/backtest.py
 
+      # Research variant. Writes data/v2/ only -- it cannot affect v1's output.
+      # Allowed to fail without failing the run: v2 is not traded, so a broken
+      # experiment must never block the signal you actually act on.
+      - name: compute v2 graded signals (research)
+        continue-on-error: true
+        run: python engine/signals_v2.py
+
       - name: commit if changed
         run: |
           git config user.name  "signals-bot"
