@@ -1,53 +1,69 @@
 {
-  "generated_at": "2026-08-04T17:10:05Z",
+  "generated_at": "2026-08-05T11:59:59Z",
   "tickers": [
     {
       "ticker": "QQQ",
       "tier": "tradeable",
       "trades": 416,
-      "sr": 0.716,
-      "avg_bp": 77.8,
-      "years": 27.3
+      "sr": 0.713,
+      "avg_bp": 77.4,
+      "years": 27.4
     },
     {
       "ticker": "XLK",
       "tier": "watch",
       "trades": 411,
-      "sr": 0.705,
-      "avg_bp": 71.6,
+      "sr": 0.701,
+      "avg_bp": 71.2,
       "years": 27.6
     },
     {
       "ticker": "DIA",
       "tier": "watch",
       "trades": 450,
-      "sr": 0.449,
-      "avg_bp": 28.3,
+      "sr": 0.442,
+      "avg_bp": 27.9,
       "years": 28.5
     },
     {
       "ticker": "SPY",
       "tier": "watch",
       "trades": 541,
-      "sr": 0.436,
-      "avg_bp": 29.5,
+      "sr": 0.43,
+      "avg_bp": 29.1,
       "years": 33.5
     },
     {
       "ticker": "TLT",
       "tier": "control",
       "trades": 338,
-      "sr": -0.16,
-      "avg_bp": -7.6,
+      "sr": -0.168,
+      "avg_bp": -8.0,
       "years": 24.0
     },
     {
       "ticker": "GLD",
       "tier": "control",
       "trades": 346,
-      "sr": -0.309,
-      "avg_bp": -16.1,
+      "sr": -0.317,
+      "avg_bp": -16.5,
       "years": 21.7
+    },
+    {
+      "ticker": "TQQQ",
+      "tier": "watch",
+      "trades": 266,
+      "sr": 0.874,
+      "avg_bp": 198.2,
+      "years": 16.4
+    },
+    {
+      "ticker": "QQQM",
+      "tier": "watch",
+      "trades": 78,
+      "sr": 0.914,
+      "avg_bp": 98.0,
+      "years": 5.8
     }
   ]
 }

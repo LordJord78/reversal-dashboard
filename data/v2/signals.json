@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-08-05T12:00:08Z",
+  "last_session": "2026-08-04",
+  "variant": "graded",
+  "params": {
+    "sizer": 0.25,
+    "cap": 2.0,
+    "vol_window": 60,
+    "min_position": 0.02
+  },
+  "research": {
+    "sr_at_0.2bp": 0.774,
+    "sr_at_1bp": 0.722,
+    "sr_at_2bp": 0.657,
+    "breakeven_slippage_bp": 12.1,
+    "v1_breakeven_slippage_bp": 40.2,
+    "walk_forward": {
+      "first_half": 0.695,
+      "second_half": 0.898
+    },
+    "max_dd": -0.093,
+    "v1_max_dd": -0.247,
+    "positions_per_year": 251,
+    "v1_trades_per_year": 16,
+    "caveat": "Beats v1 only below ~1bp slippage. Above that v1 wins and the gap widens. Measure your own fills first."
+  },
+  "instruments": [
+    {
+      "ticker": "QQQ",
+      "tier": "tradeable",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.022156,
+      "vol": 0.010674,
+      "z": 2.076,
+      "action": "short",
+      "position": -0.519,
+      "price": 723.85,
+      "v1_action": "short",
+      "v1_position": -2.0
+    },
+    {
+      "ticker": "XLK",
+      "tier": "watch",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.023997,
+      "vol": 0.014925,
+      "z": 1.608,
+      "action": "short",
+      "position": -0.402,
+      "price": 186.9,
+      "v1_action": "none",
+      "v1_position": 0.0
+    },
+    {
+      "ticker": "DIA",
+      "tier": "watch",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.004703,
+      "vol": 0.005519,
+      "z": 0.852,
+      "action": "short",
+      "position": -0.213,
+      "price": 540.43,
+      "v1_action": "none",
+      "v1_position": 0.0
+    },
+    {
+      "ticker": "SPY",
+      "tier": "watch",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.014067,
+      "vol": 0.005995,
+      "z": 2.347,
+      "action": "short",
+      "position": -0.587,
+      "price": 771.33,
+      "v1_action": "short",
+      "v1_position": -2.0
+    },
+    {
+      "ticker": "TLT",
+      "tier": "control",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.002057,
+      "vol": 0.004049,
+      "z": 0.508,
+      "action": "short",
+      "position": -0.127,
+      "price": 82.82,
+      "v1_action": "none",
+      "v1_position": 0.0
+    },
+    {
+      "ticker": "GLD",
+      "tier": "control",
+      "prev_session": "2026-08-04",
+      "prev_return": 5.3e-05,
+      "vol": 0.008754,
+      "z": 0.006,
+      "action": "flat",
+      "position": 0.0,
+      "price": 374.16,
+      "v1_action": "none",
+      "v1_position": 0.0
+    },
+    {
+      "ticker": "TQQQ",
+      "tier": "watch",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.064145,
+      "vol": 0.03143,
+      "z": 2.041,
+      "action": "short",
+      "position": -0.51,
+      "price": 74.82,
+      "v1_action": "short",
+      "v1_position": -2.0
+    },
+    {
+      "ticker": "QQQM",
+      "tier": "watch",
+      "prev_session": "2026-08-04",
+      "prev_return": 0.022051,
+      "vol": 0.010482,
+      "z": 2.104,
+      "action": "short",
+      "position": -0.526,
+      "price": 298.03,
+      "v1_action": "short",
+      "v1_position": -2.0
+    }
+  ]
+}

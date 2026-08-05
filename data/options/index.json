@@ -1,0 +1,48 @@
+{
+  "instruments": [
+    {
+      "ticker": "QQQ",
+      "tier": "tradeable",
+      "trades": 416,
+      "option_avg_bp": 48.8,
+      "share_avg_bp": 77.4,
+      "edge_retained": 0.63,
+      "edge_retained_undefined": null,
+      "option_sr": 0.4277550343516967,
+      "share_sr": 0.712784466021575,
+      "hit_rate": 0.514,
+      "avg_extrinsic_pct": 0.036,
+      "max_outlay": 0.234,
+      "unfundable": 0,
+      "years": 27.4
+    },
+    {
+      "ticker": "SPY",
+      "tier": "watch",
+      "trades": 541,
+      "option_avg_bp": 10.2,
+      "share_avg_bp": 29.1,
+      "edge_retained": 0.349,
+      "edge_retained_undefined": null,
+      "option_sr": 0.14607350076338863,
+      "share_sr": 0.4301052821431002,
+      "hit_rate": 0.471,
+      "avg_extrinsic_pct": 0.0336,
+      "max_outlay": 0.192,
+      "unfundable": 0,
+      "years": 33.5
+    }
+  ],
+  "spread_grid": [
+    0.01,
+    0.02,
+    0.03,
+    0.05,
+    0.08
+  ],
+  "iv_grid": [
+    1.5,
+    2.0,
+    2.5
+  ]
+}
