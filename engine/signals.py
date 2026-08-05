@@ -25,6 +25,9 @@ disagree, which a second live feed could not guarantee.
 import json, os, statistics, sys, urllib.request, io, csv
 from datetime import datetime, timezone, timedelta
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import options as O
+
 VOL_WINDOW = 60
 THRESHOLD  = 2.0
 CAP        = 2.0
@@ -55,7 +58,51 @@ UNIVERSE = [
     ("GLD", "control",   {"sr": -0.09, "sr_ex": 0.14, "sr_modern": None,
                           "tpy": None, "avg_bp": None, "spread_bp": None,
                           "worst_trade": None}),
+    # No research-note stats exist for these two. They are not independent
+    # tests of the signal -- QQQM tracks the same index as QQQ and TQQQ is
+    # QQQ levered 3x -- so they are carried as execution vehicles, to answer
+    # "should QQQ's signal be traded through a different instrument", not
+    # "does the signal work here too". Any correlation-blind significance
+    # test on them will look far better than it is.
+    ("TQQQ", "watch",    {"sr": None, "sr_ex": None, "sr_modern": None,
+                          "tpy": None, "avg_bp": None, "spread_bp": None,
+                          "worst_trade": None}),
+    ("QQQM", "watch",    {"sr": None, "sr_ex": None, "sr_modern": None,
+                          "tpy": None, "avg_bp": None, "spread_bp": None,
+                          "worst_trade": None}),
 ]
+
+# Per-instrument configuration kept out of UNIVERSE so the (ticker, tier,
+# stats) shape every other module unpacks stays stable.
+#
+#   display     render on the site. False still scores the instrument every
+#               run -- the controls have to keep running to be controls, they
+#               just do not need a card.
+#   leverage    embedded leverage in the instrument itself, multiplied by the
+#               position size to get true exposure.
+#   options     whether to publish a strike recommendation. Gated on tick
+#               size: QQQ and SPY quote in pennies at every price, the rest
+#               carry a $0.05 floor above $3.00, which is a hard floor under
+#               the spread on a strategy with a ~68bp edge.
+#   strike_step listed strike increment near the money. VERIFY against a live
+#               chain before trusting a published strike -- these are
+#               reasonable defaults, not confirmed values.
+META = {
+    "QQQ":  {"display": True,  "leverage": 1.0, "options": True,  "strike_step": 1.0},
+    "XLK":  {"display": True,  "leverage": 1.0, "options": False, "strike_step": 1.0},
+    "SPY":  {"display": True,  "leverage": 1.0, "options": True,  "strike_step": 1.0},
+    "TQQQ": {"display": True,  "leverage": 3.0, "options": False, "strike_step": 1.0},
+    "QQQM": {"display": True,  "leverage": 1.0, "options": False, "strike_step": 1.0},
+    "DIA":  {"display": False, "leverage": 1.0, "options": False, "strike_step": 1.0},
+    "TLT":  {"display": False, "leverage": 1.0, "options": False, "strike_step": 1.0},
+    "GLD":  {"display": False, "leverage": 1.0, "options": False, "strike_step": 1.0},
+}
+DEFAULT_META = {"display": True, "leverage": 1.0, "options": False,
+                "strike_step": 1.0}
+
+
+def meta(tk):
+    return META.get(tk, DEFAULT_META)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
@@ -246,7 +293,22 @@ def main():
                                 "error": "insufficient history"})
             continue
         sessions.append(sig["prev_session"])
-        instruments.append({"ticker": tk, "tier": tier, "stats": stats, **sig})
+        m = meta(tk)
+        entry = {"ticker": tk, "tier": tier, "stats": stats,
+                 "display": m["display"], "leverage": m["leverage"], **sig}
+
+        # True market exposure is the position size times whatever leverage is
+        # baked into the instrument. Published even when it equals position,
+        # so the one case where it does not (TQQQ at 3x) is not a special
+        # field that only appears when there is bad news to deliver.
+        entry["effective_exposure"] = round(sig["position"] * m["leverage"], 3)
+
+        if m["options"] and sig["action"] != "none":
+            entry["option_hint"] = O.recommend(
+                spot=sig["price"], sigma_daily=sig["vol"],
+                action=sig["action"], step=m["strike_step"])
+
+        instruments.append(entry)
 
     # The newest session any instrument scored, not whichever one happened to
     # come first in UNIVERSE. Those differ when a feed lags, and the page

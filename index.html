@@ -62,7 +62,9 @@
   trading those triggers earns nothing: SR −0.17 and −0.09 across the full history.
   The failure mode to watch for isn't a fire, it's a control quietly developing real
   edge — that would mean the signal is picking up something in the data rather than in
-  the market. Never trade these.</p>
+  the market. Never trade these. They were taken off the board as cards, not out of the
+  engine: they are still scored on every run, because a control nobody computes is not
+  a control.</p>
 
   <h2>Active trades</h2>
   <div id="active"></div>
@@ -172,6 +174,8 @@ function focusCard(tk){
       <div><div class="lbl">vol</div><div class="val">${(i.vol*100).toFixed(2)}%</div></div>
     </div>
     ${zMeter(i.z, DATA.threshold)}
+    ${exposureLine(i)}
+    ${optionLine(i)}
     <div class="stat">${statLine(i.stats)}${
       i.stats.worst_trade ? ` · worst ${i.stats.worst_trade}%` : ''}</div>
     <div class="cardact">
@@ -179,6 +183,38 @@ function focusCard(tk){
         Log this trade</button>` : ''}
       <a class="meta" href="ticker.html?t=${i.ticker}">live chart &amp; 20yr record &rarr;</a>
     </div>
+  </div>`;
+}
+
+/* Leverage baked into the instrument, not into the position. TQQQ at a 2.0
+   position is 6x the index. Rendered whenever leverage differs from 1 —
+   including when the signal is quiet — so it is a property of the row rather
+   than a warning that only appears once there is bad news to deliver. */
+function exposureLine(i){
+  const lev = i.leverage || 1;
+  if(lev === 1) return '';
+  const eff = i.effective_exposure ?? (i.position || 0) * lev;
+  return `<div class="stat"><span class="err"><strong>${lev}x instrument</strong></span>
+    <span class="meta">— ${eff ? Math.abs(eff).toFixed(2) + 'x effective exposure to the index'
+      : 'no position, but any size here is ' + lev + 'x'}</span></div>`;
+}
+
+/* The engine only publishes option_hint for penny-tick names that fired.
+   The strike is derived from the last published close; entry is at an open
+   that did not exist when the engine ran, so it is explicitly provisional. */
+function optionLine(i){
+  const h = i.option_hint;
+  if(!h) return '';
+  const gap = h.recompute_if_gap_pct;
+  return `<div class="stat" style="border-top:1px solid var(--line);padding-top:8px;margin-top:8px">
+    <div><span class="pill ${h.side === 'put' ? 'short' : 'buy'}">BUY ${h.side.toUpperCase()}</span>
+      <strong>$${h.strike}</strong>
+      <span class="meta">strike · Δ${h.delta} · est $${h.est_price}
+      · extrinsic $${h.est_extrinsic}</span></div>
+    <div class="meta" style="font-size:11px;margin-top:4px">
+      Provisional — derived from $${h.ref_spot}. Recompute if the open gaps
+      more than ${gap}%. Verify the strike is listed and check the live spread
+      before entering.</div>
   </div>`;
 }
 
@@ -207,7 +243,9 @@ function rowsTable(list){
 
 /* ------------------------------------------------------------------ explorer */
 function renderExplorer(){
-  const tickers = DATA ? DATA.instruments.map(i => i.ticker) : FOCUS;
+  const tickers = DATA
+    ? DATA.instruments.filter(i => i.display !== false).map(i => i.ticker)
+    : FOCUS;
   $('ex-ticks').innerHTML = tickers.map(t =>
     `<button class="chip" aria-pressed="${t===exTicker}" onclick="setTicker('${t}')">${t}</button>`).join('');
   $('ex-range').innerHTML = RANGES.map(([lab,n]) =>
@@ -392,9 +430,26 @@ function renderLog(){
 }
 
 /* ------------------------------------------------------------------ render */
+/* Controls are scored every run but do not get cards. A control that stops
+   being computed stops being a control, so this reports their z compactly
+   rather than dropping them — the check is the reason the signal is trusted
+   at all, and an invisible check is one nobody notices has stopped. */
+function controlStatus(){
+  const ctrl = DATA.instruments.filter(i => i.tier === 'control');
+  if(!ctrl.length) return '<p class="note err">No control instruments are being scored.</p>';
+  const bits = ctrl.map(i => i.error
+    ? `${i.ticker} <span class="err">${esc(i.error)}</span>`
+    : `${i.ticker} <strong>${i.z >= 0 ? '+' : ''}${i.z.toFixed(2)}</strong>`).join(' · ');
+  const fired = ctrl.filter(i => i.action && i.action !== 'none');
+  return `<p class="note">Scored every run, never traded, not shown as cards: ${bits}.
+    ${fired.length ? `<strong>Firing today: ${fired.map(i => i.ticker).join(', ')}</strong> —
+      expected, controls trigger about as often as everything else. What matters is that
+      trading them earns nothing.` : 'Quiet today.'}</p>`;
+}
+
 function render(){
   if(!DATA) return;
-  const by = t => DATA.instruments.filter(i => i.tier === t);
+  const by = t => DATA.instruments.filter(i => i.tier === t && i.display !== false);
   $('stamp').textContent =
     `last session ${DATA.last_session} · generated ${DATA.generated_at} · ` +
     `threshold |z| ≥ ${DATA.threshold} · cap ${DATA.cap}x`;
@@ -410,11 +465,11 @@ function render(){
       ? `<div class="banner">Data is ${Math.floor(hrs/24)} days old — the workflow may not
          have run. Do not trade from this page until it refreshes.</div>` : '');
 
-  $('t-tick').innerHTML = DATA.instruments
+  $('t-tick').innerHTML = DATA.instruments.filter(i => i.display !== false)
     .map(i => `<option value="${i.ticker}">${i.ticker}</option>`).join('');
   $('focus').innerHTML = FOCUS.map(focusCard).join('');
   $('watch').innerHTML = rowsTable(by('watch'));
-  $('ctrl').innerHTML  = rowsTable(by('control'));
+  $('ctrl').innerHTML  = controlStatus();
   renderExplorer(); renderActive(); renderLog();
 }
 

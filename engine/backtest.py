@@ -89,6 +89,11 @@ def replay(rows, spread_bp):
             "d": d,                                   # session traded
             "sd": rows[i][0],                         # session that fired
             "z": round(z, 3),
+            # Trailing vol at signal time. Published so options_backtest.py
+            # can price the contract off the same number that produced the
+            # signal, rather than recomputing it and risking a quiet drift
+            # between the two.
+            "vol": round(sd, 6),
             "side": "short" if pos < 0 else "buy",
             "pos": round(pos, 3),
             "o": round(o, 2), "c": round(c, 2),

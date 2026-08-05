@@ -45,6 +45,14 @@ jobs:
       - name: rebuild backtest + alerts
         run: python engine/backtest.py
 
+      # Replays every historical trade as the recommended deep-ITM contract.
+      # Reads the backtest's trade list, so it runs after it. Allowed to fail
+      # without failing the run: this is research on an instrument choice, and
+      # a broken option study must never block the signal actually traded.
+      - name: option backtest (research)
+        continue-on-error: true
+        run: python engine/options_backtest.py
+
       # Research variant. Writes data/v2/ only -- it cannot affect v1's output.
       # Allowed to fail without failing the run: v2 is not traded, so a broken
       # experiment must never block the signal you actually act on.
