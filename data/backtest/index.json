@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-08-18T10:28:03Z",
+  "generated_at": "2026-08-19T10:28:31Z",
   "tickers": [
     {
       "ticker": "QQQ",
       "tier": "tradeable",
       "trades": 417,
-      "sr": 0.718,
+      "sr": 0.717,
       "avg_bp": 77.8,
       "years": 27.4
     },
@@ -61,7 +61,7 @@
       "ticker": "QQQM",
       "tier": "watch",
       "trades": 79,
-      "sr": 0.938,
+      "sr": 0.937,
       "avg_bp": 99.9,
       "years": 5.8
     }
