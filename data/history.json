@@ -408,19 +408,19 @@
   {
     "session": "2026-08-28",
     "z": {
-      "QQQ": -0.432,
+      "QQQ": -0.431,
       "XLK": -0.88,
-      "DIA": null,
+      "DIA": -0.54,
       "SPY": -0.513,
-      "TLT": -0.568,
+      "TLT": -0.535,
       "GLD": -3.499,
-      "TQQQ": -0.435,
+      "TQQQ": -0.438,
       "QQQM": -0.428
     },
     "action": {
       "QQQ": "none",
       "XLK": "none",
-      "DIA": null,
+      "DIA": "none",
       "SPY": "none",
       "TLT": "none",
       "GLD": "buy",
