@@ -8,13 +8,13 @@
       "share_avg_bp": 77.8,
       "edge_retained": 0.633,
       "edge_retained_undefined": null,
-      "option_sr": 0.43179645026194574,
-      "share_sr": 0.7166914407544468,
+      "option_sr": 0.4317652178604419,
+      "share_sr": 0.7166395342746666,
       "hit_rate": 0.516,
       "avg_extrinsic_pct": 0.036,
       "max_outlay": 0.234,
       "unfundable": 0,
-      "years": 27.4
+      "years": 27.5
     },
     {
       "ticker": "SPY",
@@ -24,8 +24,8 @@
       "share_avg_bp": 29.3,
       "edge_retained": 0.356,
       "edge_retained_undefined": null,
-      "option_sr": 0.1498781491395491,
-      "share_sr": 0.4336015393884515,
+      "option_sr": 0.14986929004156563,
+      "share_sr": 0.43357589294444937,
       "hit_rate": 0.472,
       "avg_extrinsic_pct": 0.0336,
       "max_outlay": 0.192,
