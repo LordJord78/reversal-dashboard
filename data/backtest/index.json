@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-15T14:39:49Z",
+  "generated_at": "2026-09-16T14:38:32Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -45,7 +45,7 @@
       "ticker": "GLD",
       "tier": "control",
       "trades": 347,
-      "sr": -0.315,
+      "sr": -0.314,
       "avg_bp": -16.3,
       "years": 21.8
     },
