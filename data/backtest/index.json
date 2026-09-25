@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T14:39:31Z",
+  "generated_at": "2026-09-25T15:01:23Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -20,9 +20,9 @@
     {
       "ticker": "DIA",
       "tier": "watch",
-      "trades": 451,
-      "sr": 0.438,
-      "avg_bp": 27.7,
+      "trades": 452,
+      "sr": 0.436,
+      "avg_bp": 27.4,
       "years": 28.6
     },
     {
@@ -36,9 +36,9 @@
     {
       "ticker": "TLT",
       "tier": "control",
-      "trades": 338,
-      "sr": -0.168,
-      "avg_bp": -8.0,
+      "trades": 339,
+      "sr": -0.182,
+      "avg_bp": -8.7,
       "years": 24.1
     },
     {
@@ -61,7 +61,7 @@
       "ticker": "QQQM",
       "tier": "watch",
       "trades": 80,
-      "sr": 0.908,
+      "sr": 0.907,
       "avg_bp": 96.5,
       "years": 5.9
     }
