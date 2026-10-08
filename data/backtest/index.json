@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T17:18:28Z",
+  "generated_at": "2026-10-08T17:13:36Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -21,7 +21,7 @@
       "ticker": "DIA",
       "tier": "watch",
       "trades": 453,
-      "sr": 0.435,
+      "sr": 0.434,
       "avg_bp": 27.3,
       "years": 28.7
     },
@@ -29,9 +29,9 @@
       "ticker": "SPY",
       "tier": "watch",
       "trades": 543,
-      "sr": 0.434,
+      "sr": 0.433,
       "avg_bp": 29.3,
-      "years": 33.6
+      "years": 33.7
     },
     {
       "ticker": "TLT",

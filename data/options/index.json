@@ -8,8 +8,8 @@
       "share_avg_bp": 77.2,
       "edge_retained": 0.63,
       "edge_retained_undefined": null,
-      "option_sr": 0.42656820693840725,
-      "share_sr": 0.7116161061563241,
+      "option_sr": 0.42653744219593037,
+      "share_sr": 0.7115647173087448,
       "hit_rate": 0.514,
       "avg_extrinsic_pct": 0.0359,
       "max_outlay": 0.234,
@@ -24,13 +24,13 @@
       "share_avg_bp": 29.3,
       "edge_retained": 0.355,
       "edge_retained_undefined": null,
-      "option_sr": 0.1498260281938245,
-      "share_sr": 0.43351739394116817,
+      "option_sr": 0.14981719306463706,
+      "share_sr": 0.4334918129584959,
       "hit_rate": 0.473,
       "avg_extrinsic_pct": 0.0336,
       "max_outlay": 0.192,
       "unfundable": 0,
-      "years": 33.6
+      "years": 33.7
     }
   ],
   "spread_grid": [
