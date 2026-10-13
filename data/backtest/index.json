@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-12T19:38:58Z",
+  "generated_at": "2026-10-13T17:23:31Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -15,7 +15,7 @@
       "trades": 411,
       "sr": 0.699,
       "avg_bp": 71.2,
-      "years": 27.7
+      "years": 27.8
     },
     {
       "ticker": "DIA",
