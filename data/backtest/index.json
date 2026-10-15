@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-14T14:54:30Z",
+  "generated_at": "2026-10-15T14:41:40Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -7,7 +7,7 @@
       "trades": 418,
       "sr": 0.711,
       "avg_bp": 77.2,
-      "years": 27.5
+      "years": 27.6
     },
     {
       "ticker": "XLK",
@@ -20,8 +20,8 @@
     {
       "ticker": "DIA",
       "tier": "watch",
-      "trades": 453,
-      "sr": 0.434,
+      "trades": 454,
+      "sr": 0.435,
       "avg_bp": 27.3,
       "years": 28.7
     },
