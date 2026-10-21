@@ -1209,5 +1209,28 @@
       "TQQQ": "none",
       "QQQM": "none"
     }
+  },
+  {
+    "session": "2026-10-20",
+    "z": {
+      "QQQ": 0.406,
+      "XLK": 0.614,
+      "DIA": 2.158,
+      "SPY": 0.82,
+      "TLT": 0.155,
+      "GLD": -0.09,
+      "TQQQ": 0.413,
+      "QQQM": 0.437
+    },
+    "action": {
+      "QQQ": "none",
+      "XLK": "none",
+      "DIA": "short",
+      "SPY": "none",
+      "TLT": "none",
+      "GLD": "none",
+      "TQQQ": "none",
+      "QQQM": "none"
+    }
   }
 ]
