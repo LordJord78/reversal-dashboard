@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-11-10T17:30:36Z",
+  "generated_at": "2026-11-11T17:43:55Z",
   "tickers": [
     {
       "ticker": "QQQ",
       "tier": "tradeable",
-      "trades": 421,
-      "sr": 0.709,
-      "avg_bp": 76.4,
+      "trades": 422,
+      "sr": 0.707,
+      "avg_bp": 76.1,
       "years": 27.6
     },
     {
       "ticker": "XLK",
       "tier": "watch",
-      "trades": 414,
-      "sr": 0.692,
-      "avg_bp": 70.1,
+      "trades": 415,
+      "sr": 0.691,
+      "avg_bp": 69.8,
       "years": 27.8
     },
     {
@@ -28,9 +28,9 @@
     {
       "ticker": "SPY",
       "tier": "watch",
-      "trades": 546,
-      "sr": 0.434,
-      "avg_bp": 29.2,
+      "trades": 547,
+      "sr": 0.432,
+      "avg_bp": 29.0,
       "years": 33.7
     },
     {
@@ -52,17 +52,17 @@
     {
       "ticker": "TQQQ",
       "tier": "watch",
-      "trades": 271,
-      "sr": 0.865,
-      "avg_bp": 194.5,
+      "trades": 272,
+      "sr": 0.862,
+      "avg_bp": 193.0,
       "years": 16.7
     },
     {
       "ticker": "QQQM",
       "tier": "watch",
-      "trades": 83,
-      "sr": 0.889,
-      "avg_bp": 92.1,
+      "trades": 84,
+      "sr": 0.88,
+      "avg_bp": 90.1,
       "years": 6.1
     }
   ]
