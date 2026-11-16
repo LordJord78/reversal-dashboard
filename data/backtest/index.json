@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-13T17:31:29Z",
+  "generated_at": "2026-11-16T20:01:31Z",
   "tickers": [
     {
       "ticker": "QQQ",
@@ -36,8 +36,8 @@
     {
       "ticker": "TLT",
       "tier": "control",
-      "trades": 344,
-      "sr": -0.183,
+      "trades": 345,
+      "sr": -0.182,
       "avg_bp": -8.6,
       "years": 24.3
     },
@@ -47,7 +47,7 @@
       "trades": 349,
       "sr": -0.319,
       "avg_bp": -16.5,
-      "years": 21.9
+      "years": 22.0
     },
     {
       "ticker": "TQQQ",
