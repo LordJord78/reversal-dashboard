@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-26T19:25:42Z",
+  "generated_at": "2026-11-27T19:21:38Z",
   "last_session": "2026-11-25",
   "stale_sessions": [],
   "threshold": 2.0,
@@ -218,18 +218,7 @@
         "spread_bp": null,
         "worst_trade": null
       },
-      "display": true,
-      "leverage": 1.0,
-      "prev_session": "2026-11-25",
-      "prev_return": 0.027351,
-      "vol": 0.012822,
-      "z": 2.133,
-      "action": "short",
-      "position": -2.0,
-      "price": 261.05,
-      "trigger_up": 0.025645,
-      "trigger_dn": -0.025645,
-      "effective_exposure": -2.0
+      "error": "no data"
     }
   ]
 }

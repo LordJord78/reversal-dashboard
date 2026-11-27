@@ -1795,7 +1795,7 @@
       "TLT": -0.299,
       "GLD": 4.277,
       "TQQQ": 2.305,
-      "QQQM": 2.133
+      "QQQM": null
     },
     "action": {
       "QQQ": "short",
@@ -1805,7 +1805,7 @@
       "TLT": "none",
       "GLD": "short",
       "TQQQ": "short",
-      "QQQM": "short"
+      "QQQM": null
     }
   }
 ]
